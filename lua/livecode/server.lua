@@ -4,6 +4,11 @@ local util = require("livecode.util")
 local num_connected = 0
 local server
 
+-- Operational Transaction Necessities
+local revision_log --log of all processed changes
+local pending_changes -- recieved but not processed
+local document_state -- at last revision
+
 local function StartServer(host, port)
 	local host = host or "127.0.0.1"
 	local port = port or 11359
@@ -66,6 +71,16 @@ local function StartServer(host, port)
 							elseif decoded[1] == util.MESSAGE_TYPE.INFO then
 								forward_to_other_users(wsdata)
 
+							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
+								forward_to_other_users(wsdata)
+								local response_msg = {
+									util.MESSAGE_TYPE.ACK,
+									decoded[2]
+								}
+								local encoded = vim.json.encode(response_msg)
+            					conn:send_message(encoded)
+								print("forwarded and responeded")
+
 							else
 								error("Unknown message " .. vim.inspect(decoded))
 							end
@@ -81,8 +96,8 @@ local function StartServer(host, port)
 						end
 
 						local disconnect = {
-							util.MESSAGE_TYPE.DISCONNECT,
-							conn.id,
+							util.MESSAGE_TYPE.INFO,
+							conn.id .. "has disconnected",
 						}
 						local encoded = vim.json.encode(disconnect)
 						forward_to_other_users(encoded)

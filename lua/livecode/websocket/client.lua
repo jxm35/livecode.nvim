@@ -21,6 +21,16 @@ local function Client(opt)
 	local split_length = opt.split_length or 8192
 
 	local websocket_impl = {}
+
+	local original_type = type
+	type = function( obj )
+		local otype = original_type( obj )
+		if  otype == "table" and getmetatable( obj ) == websocket_impl then
+			return "client"
+		end
+		return otype
+	end
+
 	function websocket_impl:connect(callbacks)
 		local ret, err = client:connect(ipentry.addr, port, vim.schedule_wrap(function(err)
 			on_disconnect = callbacks.on_disconnect

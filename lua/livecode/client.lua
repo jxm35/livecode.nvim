@@ -1,11 +1,18 @@
 local webSockClient = require("livecode.websocket.client")
 local util = require("livecode.util")
+local ot = require("livecode.operational-transformation")
 
 local api_attach = {}
 local agent = 0
 local attached = false
 local DETACH = false
 local client
+
+--Operational transaction necessities
+local last_synced_revision = 0
+local pending_changes = util.newQueue()
+local sent_changes = nil
+local document_state
 
 local function StartClient(host, port)
 	local host = host or "127.0.0.1"
@@ -31,55 +38,49 @@ local function StartClient(host, port)
         end,
 
         on_text = function (wsdata)
-            local decoded = vim.json.decode(wsdata)
-            if decoded then
-                if decoded[1] == util.MESSAGE_TYPE.INFO then
-                    print("Recieved: " .. decoded[2])
-                end
+            vim.schedule(function()
+                local decoded = vim.json.decode(wsdata)
+                if decoded then
+                    if decoded[1] == util.MESSAGE_TYPE.INFO then
+                        print("Recieved: " .. decoded[2])
+                    elseif decoded[1] == util.MESSAGE_TYPE.WELCOME then
+                        if decoded[2] == true then
+                            print("I'm first")
+                        else
+                            local req = {
+                                util.MESSAGE_TYPE.GET_BUFFER,
+                            }
+                            local encoded = vim.json.encode(req)
+                            client:send_message(encoded)
+                        end
+                    elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
+                        print("buffer requested.")
+                        local fullname = vim.api.nvim_buf_get_name(0)
+                        local cwdname = vim.api.nvim_call_function("fnamemodify",
+                            { fullname, ":." }) -- filepath relative to current working directory
+                        local bufname = cwdname
+                        --if bufname == fullname then
 
-                if decoded[1] == util.MESSAGE_TYPE.WELCOME then
-                    if decoded[2] == true then
-                        print("I'm first")
-                    else
-                        local req = {
-                            util.MESSAGE_TYPE.GET_BUFFER,
+                            bufname = vim.api.nvim_call_function("fnamemodify",
+                            { fullname, ":t" }) -- split off everything before the last '/'
+                        --                      end
+                        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true) --current buf, start line, last line, 
+                        local rem = {agent, bufname}
+
+                        local obj = {
+                            util.MESSAGE_TYPE.BUFFER_CONTENT,
+                            bufname,
+                            rem,
+                            "pidslist",
+                            lines
                         }
-                        local encoded = vim.json.encode(req)
+                        local encoded = vim.json.encode(obj)
                         client:send_message(encoded)
-                    end
-                end
 
-                if decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
-                    print("buffer requested.")
-                    local fullname = vim.api.nvim_buf_get_name(0)
-                    local cwdname = vim.api.nvim_call_function("fnamemodify",
-                        { fullname, ":." }) -- filepath relative to current working directory
-                    local bufname = cwdname
-                    print(bufname .. "   " .. fullname)
-                    --if bufname == fullname then
-
-                        bufname = vim.api.nvim_call_function("fnamemodify",
-                        { fullname, ":t" }) -- split off everything before the last '/'
---                      end
-                    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true) --current buf, start line, last line, 
-                    local rem = {agent, bufname}
-
-                    local obj = {
-                        util.MESSAGE_TYPE.BUFFER_CONTENT,
-                        bufname,
-                        rem,
-                        "pidslist",
-                        lines
-                    }
-                    local encoded = vim.json.encode(obj)
-                    client:send_message(encoded)
-
-                    end
-
-                    if decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
+                    elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
                         print("loading new buffer")
                         local _, bufname, bufid, pidslist, content = unpack(decoded)
-					    local ag, bufid = unpack(bufid)
+                        local ag, bufid = unpack(bufid)
                         local buf = vim.api.nvim_create_buf(true, false)
                         vim.api.nvim_win_set_buf(0, buf)
                         vim.api.nvim_buf_set_name(buf, bufname)
@@ -94,20 +95,22 @@ local function StartClient(host, port)
                                     return true
                                 end
                                 print(start_row..","..start_column..","..old_end_row..","..old_end_column)
-                                print("a - " .. vim.inspect(bytes))
+                                print(new_end_row..","..new_end_column)
                                 local newbytes = vim.api.nvim_buf_get_text(0, start_row, start_column, start_row+new_end_row, start_column+new_end_column, {})
-                                print("b - " .. vim.inspect(newbytes))
-                                local operation = util.OPERATION_Type.INSERT
-                                if new_end_row == 0 and new_end_column == 0 then
-                                    operation = util.OPERATION_Type.INSERT
+                                print("char '" .. newbytes[1] .. "'")
+                                local operationType = util.OPERATION_TYPE.INSERT
+                                if newbytes[1] == 0 then
+                                    operationType = util.OPERATION_TYPE.DELETE
                                 end
-                                local msg = {
-                                    util.MESSAGE_TYPE.EDIT,
-                                    operation,
-                                    {}
-                                }
-
-                                
+                                local operation = ot.newOperation(operationType, start_row, start_column, old_end_row, old_end_column, newbytes[1])
+                                if sent_changes == nil then
+                                    operation:send(client)
+                                    sent_changes = operation
+                                    print("sent operation")
+                                else
+                                    pending_changes:push(operation)
+                                    print("pushed op to pending")
+                                end
                             end
                         })
 
@@ -138,9 +141,30 @@ local function StartClient(host, port)
 
                         -- end
 
+                    elseif decoded[1]== util.MESSAGE_TYPE.ACK then
+                        --validate they are the same,
+                        print("ack Recieved")
+                        sent_changes = nil
+                        if pending_changes:isEmpty() == false then
+                            local operation = pending_changes:dequeue()
+                            operation:send(client)
+                            sent_changes = operation
+                            print("new operation sent")
+                        end
+                    elseif decoded[1]== util.MESSAGE_TYPE.EDIT then
+                        local operation = ot.newOperationFromMessage(decoded[2])
+                        operation:execute()
+                        print("char added")
+                    else
+                        error("Unknown message " .. vim.inspect(decoded))
                     end
-            end
-            
+                end
+            end)
+        end,
+        on_disconnect = function ()
+            vim.schedule(function()
+                print("disconnected")
+            end)
         end
     }
 end

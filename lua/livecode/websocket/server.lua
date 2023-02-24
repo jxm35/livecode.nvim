@@ -10,6 +10,7 @@ function connection_impl:attach(callbacks)
 	self.callbacks = callbacks
 end
 function connection_impl:send_message(str)
+    print("sending:"..str)
     local mask = {}
     for i=1,4 do
         table.insert(mask, math.random(0, 255))
@@ -65,6 +66,7 @@ function connection_impl:send_message(str)
         local s = convert_bytes_to_string(frame)
 
         connections[self.id].sock:write(s)
+        print("written to: " .. self.id)
 
         sent = sent + send
     end
