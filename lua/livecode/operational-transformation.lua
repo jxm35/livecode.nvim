@@ -44,7 +44,7 @@ function operation_metatable:execute()
             print("value: '" .. value .. "'")
             if index > 1 then
                 -- pasted text gets put a line too high
-                if value == "" then
+                if value == "" and self.start_column == 0 then
                     action_row = current_row -1
                 else
                     action_row = current_row

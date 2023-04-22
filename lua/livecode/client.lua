@@ -8,6 +8,9 @@ local attached = false
 local DETACH = false
 local client
 
+-- to make sure we don't send back the changes we just received
+local ignore_ticks = {}
+
 --Operational transaction necessities
 local last_synced_revision = 0
 local pending_changes = util.newQueue()
@@ -46,6 +49,43 @@ local function StartClient(host, port)
                     elseif decoded[1] == util.MESSAGE_TYPE.WELCOME then
                         if decoded[2] == true then
                             print("I'm first")
+                            local success = vim.api.nvim_buf_attach(0, false, {
+                                on_bytes = function (_, buf, changedtick, start_row, start_column, byte_offset, old_end_row, old_end_column, old_byte_length, new_end_row, new_end_column, new_byte_length)
+                                    if DETACH then
+                                        return true
+                                    end
+                                    if ignore_ticks[changedtick] then
+                                        print("skipping tick: " .. changedtick)
+                                        ignore_ticks[changedtick] = nil
+                                        return
+                                    end
+
+                                    print("doing tick: " .. changedtick)
+                                    print(start_row..","..start_column..","..old_end_row..","..old_end_column)
+                                    print(new_end_row..","..new_end_column)
+                                    local newbytes = vim.api.nvim_buf_get_text(0, start_row, start_column, start_row+new_end_row, start_column+new_end_column, {})
+                                    -- for i,v in ipairs(newbytes) do 
+                                    --     print("char " .. i .. " '" .. newbytes[i] .. "'")
+                                    -- end
+                                    -- print("len " .. #newbytes)
+                                    print("tick: " .. changedtick)
+                                    local operationType = util.OPERATION_TYPE.INSERT
+                                    if new_end_row < old_end_row then
+                                        operationType = util.OPERATION_TYPE.DELETE
+                                    elseif new_end_row == old_end_row and new_end_column < old_end_column then
+                                            operationType = util.OPERATION_TYPE.DELETE
+                                    end
+                                    local operation = ot.newOperation(operationType, start_row, start_column, old_end_row, old_end_column, newbytes)
+                                    if sent_changes == nil then
+                                        operation:send(client)
+                                        sent_changes = operation
+                                        print("sent operation")
+                                    else
+                                        pending_changes:push(operation)
+                                        print("pushed op to pending")
+                                    end
+                                end
+                            })
                         else
                             local req = {
                                 util.MESSAGE_TYPE.GET_BUFFER,
@@ -94,13 +134,18 @@ local function StartClient(host, port)
                                 if DETACH then
                                     return true
                                 end
+                                if ignore_ticks[changedtick] then
+                                    ignore_ticks[changedtick] = nil
+                                    return
+                                end
                                 print(start_row..","..start_column..","..old_end_row..","..old_end_column)
                                 print(new_end_row..","..new_end_column)
                                 local newbytes = vim.api.nvim_buf_get_text(0, start_row, start_column, start_row+new_end_row, start_column+new_end_column, {})
-                                for i,v in ipairs(newbytes) do 
-                                    print("char " .. i .. " '" .. newbytes[i] .. "'")
-                                end
-                                print("len " .. #newbytes)
+                                -- for i,v in ipairs(newbytes) do 
+                                --     print("char " .. i .. " '" .. newbytes[i] .. "'")
+                                -- end
+                                -- print("len " .. #newbytes)
+                                print("tick: " .. changedtick)
                                 local operationType = util.OPERATION_TYPE.INSERT
                                 if new_end_row < old_end_row then
                                     operationType = util.OPERATION_TYPE.DELETE
@@ -119,33 +164,6 @@ local function StartClient(host, port)
                             end
                         })
 
-
-                        -- if vim.api.nvim_buf_call then
-                        --     vim.api.nvim_buf_call(buf, function()
-                        --         vim.api.nvim_command("doautocmd BufRead " .. vim.api.nvim_buf_get_name(buf))
-                        --     end)
-                        -- end
-
-                        -- if not attached then
-                        --     local attach_success = vim.api.nvim_buf_attach(buf, false, {
-                        --         on_lines = function(_, buf, changedtick, firstline, lastline, new_lastline, bytecount)
-                        --             print("line change detected!")
-                        --         end,
-                        --         on_detach = function(_, buf)
-                        --             attached = false
-                        --         end
-
-                        --     })
-
-                        --     if attach_success then
-                        --         attached = true
-                        --     end
-
-                        -- else -- if not attached
-                        --     detach[buf] = nil
-
-                        -- end
-
                     elseif decoded[1]== util.MESSAGE_TYPE.ACK then
                         --validate they are the same,
                         print("ack Recieved")
@@ -158,6 +176,9 @@ local function StartClient(host, port)
                         end
                     elseif decoded[1]== util.MESSAGE_TYPE.EDIT then
                         local operation = ot.newOperationFromMessage(decoded[2])
+                        local next_tick = vim.api.nvim_buf_get_changedtick(0)
+                        ignore_ticks[next_tick] = true
+                        print("ignoring tick: " .. next_tick)
                         operation:execute()
                         print("char added")
                     else
