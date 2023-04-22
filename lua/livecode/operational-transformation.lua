@@ -33,12 +33,30 @@ end
 
 function operation_metatable:execute()
     --vim.api.nvim_buf_set_text(0, 0, 28, 0, 32, {self.character})
-    if self.operation == util.OPERATION_TYPE.INSERT then
+    print("op" .. self.operationType .. " " .. util.OPERATION_TYPE.INSERT)
+    if self.operationType == util.OPERATION_TYPE.INSERT then
         print("INSERT")
-        vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, self.start_row, self.start_column, {self.character})
+        local current_row = self.start_row
+        local action_row = current_row
+        vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, current_row, self.start_column, {self.character[1]})
+        current_row = current_row + 1
+        for index, value in ipairs(self.character) do
+            print("value: '" .. value .. "'")
+            if index > 1 then
+                -- pasted text gets put a line too high
+                if value == "" then
+                    action_row = current_row -1
+                else
+                    action_row = current_row
+                end
+                vim.api.nvim_buf_set_lines(0, action_row, action_row, false, {value})
+                current_row = current_row + 1
+            end
+        end
+
     else
         print("DELETE")
-        vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, self.start_row+self.end_row, self.start_column+self.end_column, {self.character})
+        vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, self.start_row+self.end_row, self.start_column+self.end_column, {self.character[1]})
     end
 end
 

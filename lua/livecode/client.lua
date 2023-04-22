@@ -97,12 +97,17 @@ local function StartClient(host, port)
                                 print(start_row..","..start_column..","..old_end_row..","..old_end_column)
                                 print(new_end_row..","..new_end_column)
                                 local newbytes = vim.api.nvim_buf_get_text(0, start_row, start_column, start_row+new_end_row, start_column+new_end_column, {})
-                                print("char '" .. newbytes[1] .. "'")
-                                local operationType = util.OPERATION_TYPE.INSERT
-                                if newbytes[1] == 0 then
-                                    operationType = util.OPERATION_TYPE.DELETE
+                                for i,v in ipairs(newbytes) do 
+                                    print("char " .. i .. " '" .. newbytes[i] .. "'")
                                 end
-                                local operation = ot.newOperation(operationType, start_row, start_column, old_end_row, old_end_column, newbytes[1])
+                                print("len " .. #newbytes)
+                                local operationType = util.OPERATION_TYPE.INSERT
+                                if new_end_row < old_end_row then
+                                    operationType = util.OPERATION_TYPE.DELETE
+                                elseif new_end_row == old_end_row and new_end_column < old_end_column then
+                                        operationType = util.OPERATION_TYPE.DELETE
+                                end
+                                local operation = ot.newOperation(operationType, start_row, start_column, old_end_row, old_end_column, newbytes)
                                 if sent_changes == nil then
                                     operation:send(client)
                                     sent_changes = operation
