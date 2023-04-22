@@ -56,7 +56,21 @@ function operation_metatable:execute()
 
     else
         print("DELETE")
-        vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, self.start_row+self.end_row, self.start_column+self.end_column, {self.character[1]})
+        local action_column = self.start_column+self.end_column
+        local sr = self.start_row
+        local sc = self.start_column
+        local er = self.start_row+self.end_row
+        if self.end_row>0 and self.end_column>0 then
+            action_column = self.end_column
+        end
+        if self.start_column>0 and self.end_row==1 and self.end_column == 0 then
+            sr = self.start_row+1
+            sc = 0
+            er = sr+1
+            action_column=0
+        end
+        print(sr .. " " .. sc .. " " .. er .. " " .. action_column)
+        vim.api.nvim_buf_set_text(0, sr, sc, er, action_column, {self.character[1]})
     end
 end
 
