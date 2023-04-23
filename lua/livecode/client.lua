@@ -123,9 +123,9 @@ local function StartClient(host, port)
                         local ag, bufid = unpack(bufid)
                         local buf = vim.api.nvim_create_buf(true, false)
                         vim.api.nvim_win_set_buf(0, buf)
-                        vim.api.nvim_buf_set_name(buf, bufname)
+                        vim.api.nvim_buf_set_name(buf, "[livecode] ".. bufname)
                         vim.api.nvim_buf_set_lines(buf, 0, -1, true, content)
-                        vim.api.nvim_exec("edit!", false)
+                        vim.api.nvim_exec("filetype detect", false)
 
                         --Attach to buffer
 
