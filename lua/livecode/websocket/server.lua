@@ -73,7 +73,7 @@ function connection_impl:send_message(str)
 end
 
 function Run_server(opt)
-    local host = opt.host or '127.0.0.1'
+    local host = opt.host or '0.0.0.0'
     local port = opt.port or 11359
     local server = vim.loop.new_tcp()
     server:bind(host,port)

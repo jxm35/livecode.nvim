@@ -10,8 +10,12 @@ local pending_changes = util.newQueue() -- recieved but not processed
 local revision_log --log of all processed changes
 local document_state -- at last revision
 
+local function getPublicIp()
+	return "192.168.0.1"
+end
+
 local function StartServer(host, port)
-	local host = host or "127.0.0.1"
+	local host = host or "0.0.0.0"
 	local port = port or 11359
 
 	server = websocket_server { host = host, port = port }
@@ -111,9 +115,8 @@ local function StartServer(host, port)
 
 		end
 	}
-    local remote_host = "192.168.0.1"
-	print("local" .. host .. ":" .. port)
-	print("remote" .. remote_host .. ":" .. port)
+	print("local - " .. "127.0.0.1" .. ":" .. port)
+	print("remote - " .. getPublicIp() .. ":" .. port)
 end
 
 local function StopServer()
