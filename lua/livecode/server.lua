@@ -111,7 +111,9 @@ local function StartServer(host, port)
 
 		end
 	}
-	print("Server is listening on port " .. port .. "...")
+    local remote_host = "192.168.0.1"
+	print("local" .. host .. ":" .. port)
+	print("remote" .. remote_host .. ":" .. port)
 end
 
 local function StopServer()

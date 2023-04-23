@@ -77,7 +77,7 @@ function Run_server(opt)
     local port = opt.port or 11359
     local server = vim.loop.new_tcp()
     server:bind(host,port)
-    print('TCP echo-server listening on port: '..server:getsockname().port)
+    print('TCP listening on port: '..server:getsockname().port)
     local websocket_impl = {}
     websocket_impl.connections = connections
 
