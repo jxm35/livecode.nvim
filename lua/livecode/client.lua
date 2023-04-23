@@ -176,10 +176,8 @@ local function StartClient(host, port)
                         end
                     elseif decoded[1]== util.MESSAGE_TYPE.EDIT then
                         local operation = ot.newOperationFromMessage(decoded[2])
-                        local next_tick = vim.api.nvim_buf_get_changedtick(0)
-                        ignore_ticks[next_tick] = true
-                        print("ignoring tick: " .. next_tick)
-                        operation:execute()
+                        operation:execute(ignore_ticks)
+        
                         print("char added")
                     else
                         error("Unknown message " .. vim.inspect(decoded))

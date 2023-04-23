@@ -31,13 +31,15 @@ function operation_metatable:send(client)
     client:send_message(encoded)
 end
 
-function operation_metatable:execute()
+function operation_metatable:execute(ignore_table)
     --vim.api.nvim_buf_set_text(0, 0, 28, 0, 32, {self.character})
     print("op" .. self.operationType .. " " .. util.OPERATION_TYPE.INSERT)
     if self.operationType == util.OPERATION_TYPE.INSERT then
         print("INSERT")
         local current_row = self.start_row
         local action_row = current_row
+        local next_tick = vim.api.nvim_buf_get_changedtick(0)
+        ignore_table[next_tick] = true
         vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, current_row, self.start_column, {self.character[1]})
         current_row = current_row + 1
         for index, value in ipairs(self.character) do
@@ -49,6 +51,8 @@ function operation_metatable:execute()
                 else
                     action_row = current_row
                 end
+                next_tick = vim.api.nvim_buf_get_changedtick(0)
+                ignore_table[next_tick] = true
                 vim.api.nvim_buf_set_lines(0, action_row, action_row, false, {value})
                 current_row = current_row + 1
             end
@@ -70,6 +74,8 @@ function operation_metatable:execute()
             action_column=0
         end
         print(sr .. " " .. sc .. " " .. er .. " " .. action_column)
+        local next_tick = vim.api.nvim_buf_get_changedtick(0)
+        ignore_table[next_tick] = true
         vim.api.nvim_buf_set_text(0, sr, sc, er, action_column, {self.character[1]})
     end
 end
