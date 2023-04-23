@@ -11,7 +11,8 @@ local revision_log --log of all processed changes
 local document_state -- at last revision
 
 local function getPublicIp()
-	return "192.168.0.1"
+	local output = vim.fn.system { 'ipconfig', 'getifaddr', 'en0' }
+	return output
 end
 
 local function StartServer(host, port)
