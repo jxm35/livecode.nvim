@@ -13,11 +13,56 @@ type = function( obj )
 end
 
 local function newOperation(opType, start_row, start_column, end_row, end_column, char)
-    local op = {operationType = opType, start_row = start_row, start_column = start_column, end_row = end_row, end_column = end_column, character = char}
+    if opType ~= util.OPERATION_TYPE.INSERT and opType ~= util.OPERATION_TYPE.DELETE then
+        error("invalid operation type")
+    end
+    if type(start_row) ~= "number" then
+        error("invalid start_row")
+    elseif type(start_column) ~= "number" then
+        error("invalid start_column")
+    elseif type(end_row) ~= "number" then
+        error("invalid end_row")
+    elseif type(end_column) ~= "number" then
+        error("invalid end_column")
+    elseif type(char) ~= "table" or type(char[1]) ~= "string" then
+        error("invalid character")
+    end
+
+    local op = {
+        operationType = opType,
+        start_row = start_row,
+        start_column = start_column,
+        end_row = end_row,
+        end_column = end_column,
+        character = char
+    }
     return setmetatable(op, operation_metatable)
 end
+
 local function newOperationFromMessage(msg)
-    local op = {operationType = msg.operationType, start_row = msg.start_row, start_column = msg.start_column, end_row =msg. end_row, end_column = msg.end_column, character = msg.character}
+    if msg.operationType ~= util.OPERATION_TYPE.INSERT and msg.operationType ~= util.OPERATION_TYPE.DELETE then
+        error("invalid operation type")
+    end
+    if type(msg.start_row) ~= "number" then
+        error("invalid start_row")
+    elseif type(msg.start_column) ~= "number" then
+        error("invalid start_column")
+    elseif type(msg.end_row) ~= "number" then
+        error("invalid end_row")
+    elseif type(msg.end_column) ~= "number" then
+        error("invalid end_column")
+    elseif type(msg.character) ~= "table" or type(msg.character[1]) ~= "string" then
+        error("invalid character")
+    end
+
+    local op = {
+        operationType = msg.operationType,
+        start_row = msg.start_row,
+        start_column = msg.start_column,
+        end_row =msg. end_row,
+        end_column = msg.end_column,
+        character = msg.character
+    }
     return setmetatable(op, operation_metatable)
 end
 
@@ -80,57 +125,86 @@ function operation_metatable:execute(ignore_table)
     end
 end
 
-local function transformInsertInsert(op1, op2)
-    assert((type(op1)=="operation" and type(op2)=="operation"), "Error: invalid operation")
-    if (op1.position < op2.position) or ((op1.position == op2.position) and order() == -1) then
-        return newOperation(util.OPERATION_TYPE.INSERT, op1.position, op1.character) -- Tii(Ins[3, ‘a’], Ins[4, ‘b’]) = Ins[3, ‘a’]
+local function transformInsertInsert(local_operation, incoming_operation)
+    assert((type(local_operation)=="operation" and type(incoming_operation)=="operation"), "Error: invalid operation")
+    if (local_operation.position < incoming_operation.position) or ((local_operation.position == incoming_operation.position) and order() == -1) then
+        return newOperation(
+            util.OPERATION_TYPE.INSERT,
+            incoming_operation.start_row,
+            incoming_operation.start_column+#local_operation.character[1],
+            incoming_operation.end_row,
+            incoming_operation.end_column+#local_operation.character[1],
+            incoming_operation.character
+        ) -- Tii(Ins[3, ‘a’], Ins[4, ‘b’]) = Ins[3, ‘a’]
     else
-        return newOperation(util.OPERATION_TYPE.INSERT, op1.position+1, op1.character) -- Tii(Ins[3, ‘a’], Ins[1, ‘b’]) = Ins[4, ‘a’]
+        return incoming_operation -- Tii(Ins[3, ‘a’], Ins[1, ‘b’]) = Ins[4, ‘a’]
     end
 end
 
-local function transformInsertDelete(op1, op2)
-    assert((type(op1)=="operation" and type(op2)=="operation"), "Error: invalid operation")
-    if (op1.position <= op2.position) then
-        return newOperation(util.OPERATION_TYPE.INSERT, op1.position, op1.character) -- Tid(Ins[3, ‘a’], Del[4]) = Ins[3, ‘a’]
+local function transformInsertDelete(local_operation, incoming_operation)
+    assert((type(local_operation)=="operation" and type(incoming_operation)=="operation"), "Error: invalid operation")
+    if (local_operation.position <= incoming_operation.position) then
+        return newOperation(
+            util.OPERATION_TYPE.DELETE,
+            incoming_operation.start_row,
+            incoming_operation.start_column+#local_operation.character[1],
+            incoming_operation.end_row,
+            incoming_operation.end_column+#local_operation.character[1],
+            incoming_operation.character
+        ) -- Tid(Ins[3, ‘a’], Del[4]) = Ins[3, ‘a’]
     else
-        return newOperation(util.OPERATION_TYPE.INSERT, op1.position-1, op1.character) -- Tid(Ins[3, ‘a’], Del[1]) = Ins[2, ‘a’]
+        return incoming_operation -- Tid(Ins[3, ‘a’], Del[1]) = Ins[2, ‘a’]
     end
 end
 
-local function transformDeleteInsert(op1, op2)
-    assert((type(op1)=="operation" and type(op2)=="operation"), "Error: invalid operation")
-    if (op1.position < op2.position) then
-        return newOperation(util.OPERATION_TYPE.DELETE, op1.position, op1.character)
+local function transformDeleteInsert(local_operation, incoming_operation)
+    assert((type(local_operation)=="operation" and type(incoming_operation)=="operation"), "Error: invalid operation")
+    if (local_operation.position < incoming_operation.position) then
+        return newOperation(
+            util.OPERATION_TYPE.INSERT,
+            incoming_operation.start_row,
+            incoming_operation.start_column-#local_operation.character[1],
+            incoming_operation.end_row,
+            incoming_operation.end_column-#local_operation.character[1],
+            incoming_operation.character
+        )
     else
-        return newOperation(util.OPERATION_TYPE.DELETE, op1.position+1, op1.character)
+        return incoming_operation
     end
 end
 
-local function transformDeleteDelete(op1, op2)
-    assert((type(op1)=="operation" and type(op2)=="operation"), "Error: invalid operation")
-    if (op1.position < op2.position) then
-        return newOperation(util.OPERATION_TYPE.DELETE, op1.position, op1.character) -- Tdd(Del[3], Del[4]) = Del[3]
-    elseif (op1.position > op2.position) then
-        return newOperation(util.OPERATION_TYPE.DELETE, op1.position-1, op1.character) -- Tdd(Del[3], Del[1]) = Del[2]
+local function transformDeleteDelete(local_operation, incoming_operation)
+    assert((type(local_operation)=="operation" and type(incoming_operation)=="operation"), "Error: invalid operation")
+    if (local_operation.position < incoming_operation.position) then
+        return newOperation(
+            util.OPERATION_TYPE.DELETE,
+            incoming_operation.start_row,
+            incoming_operation.start_column-#local_operation.character[1],
+            incoming_operation.end_row,
+            incoming_operation.end_column-#local_operation.character[1],
+            incoming_operation.character
+        ) -- Tdd(Del[3], Del[4]) = Del[3]
+    elseif (local_operation.position > incoming_operation.position) then
+        return incoming_operation -- Tdd(Del[3], Del[1]) = Del[2]
     else
-        return nil
+        error("deleted same char twice")
+        return newOperation()
     end
 end
 
-local function realignOperations(op1, op2)
-    assert((type(op1)=="operation" and type(op2)=="operation"), "Error: invalid operation")
-    if (op1.operationType == util.OPERATION_TYPE.INSERT) then
-        if op2.operationType == util.OPERATION_TYPE.INSERT then
-            return transformInsertInsert(op1, op2)
+local function realignOperations(local_operation, incoming_operation)
+    assert((type(local_operation)=="operation" and type(incoming_operation)=="operation"), "Error: invalid operation")
+    if (local_operation.operationType == util.OPERATION_TYPE.INSERT) then
+        if incoming_operation.operationType == util.OPERATION_TYPE.INSERT then
+            return transformInsertInsert(local_operation, incoming_operation)
         else
-            return transformInsertDelete(op1,op2)
+            return transformInsertDelete(local_operation,incoming_operation)
         end
     else
-        if op2.operationType == util.OPERATION_TYPE.INSERT then
-            return transformDeleteInsert(op1,op2)
+        if incoming_operation.operationType == util.OPERATION_TYPE.INSERT then
+            return transformDeleteInsert(local_operation,incoming_operation)
         else
-            return transformDeleteDelete(op1,op2)
+            return transformDeleteDelete(local_operation,incoming_operation)
         end
     end
 end

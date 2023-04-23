@@ -65,6 +65,13 @@ function queue_metatable:dequeue()
     return value
 end
 
+function queue_metatable:peek()
+    local first = self.first
+    if first > self.last then error("list is empty") end
+    local value = self[first]
+    return value
+end
+
 function queue_metatable:isEmpty()
     if self.first > self.last then
         return true

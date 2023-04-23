@@ -5,8 +5,9 @@ local num_connected = 0
 local server
 
 -- Operational Transaction Necessities
+local revision_number = 0
+local pending_changes = util.newQueue() -- recieved but not processed
 local revision_log --log of all processed changes
-local pending_changes -- recieved but not processed
 local document_state -- at last revision
 
 local function StartServer(host, port)
@@ -72,10 +73,12 @@ local function StartServer(host, port)
 								forward_to_other_users(wsdata)
 
 							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
+								pending_changes:push(decoded[2])
 								forward_to_other_users(wsdata)
+								revision_number = revision_number + 1
 								local response_msg = {
 									util.MESSAGE_TYPE.ACK,
-									decoded[2]
+									revision_number
 								}
 								local encoded = vim.json.encode(response_msg)
             					conn:send_message(encoded)

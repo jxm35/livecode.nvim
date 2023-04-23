@@ -167,6 +167,7 @@ local function StartClient(host, port)
                     elseif decoded[1]== util.MESSAGE_TYPE.ACK then
                         --validate they are the same,
                         print("ack Recieved")
+                        last_synced_revision = decoded[2]
                         sent_changes = nil
                         if pending_changes:isEmpty() == false then
                             local operation = pending_changes:dequeue()
@@ -176,8 +177,12 @@ local function StartClient(host, port)
                         end
                     elseif decoded[1]== util.MESSAGE_TYPE.EDIT then
                         local operation = ot.newOperationFromMessage(decoded[2])
+                        if sent_changes ~= nil then
+                            error("should not reallign")
+                            operation = ot.realignOperations(sent_changes, operation)
+                        end
+
                         operation:execute(ignore_ticks)
-        
                         print("char added")
                     else
                         error("Unknown message " .. vim.inspect(decoded))
