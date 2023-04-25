@@ -11,7 +11,7 @@ local revision_log --log of all processed changes
 local document_state -- at last revision
 
 local function getPublicIp()
-	local output = vim.fn.system { 'ipconfig', 'getifaddr', 'en0' }
+	local output = vim.fn.system({ "ipconfig", "getifaddr", "en0" })
 	return output
 end
 
@@ -19,9 +19,9 @@ local function StartServer(host, port)
 	local host = host or "0.0.0.0"
 	local port = port or 11359
 
-	server = websocket_server { host = host, port = port }
+	server = websocket_server({ host = host, port = port })
 
-	server:listen {
+	server:listen({
 		on_connect = function(conn)
 			num_connected = num_connected + 1
 
@@ -41,8 +41,8 @@ local function StartServer(host, port)
 					end
 				end
 			end
-       
-			conn:attach {
+
+			conn:attach({
 				on_text = function(wsdata)
 					vim.schedule(function()
 						local decoded = vim.json.decode(wsdata)
@@ -50,7 +50,7 @@ local function StartServer(host, port)
 							if decoded[1] == util.MESSAGE_TYPE.CONNECT then
 								local forward_msg = {
 									util.MESSAGE_TYPE.INFO,
-									decoded[2] .. " has joined."
+									decoded[2] .. " has joined.",
 								}
 								local encoded = vim.json.encode(forward_msg)
 								forward_to_other_users(encoded)
@@ -61,34 +61,29 @@ local function StartServer(host, port)
 								end
 								local response_msg = {
 									util.MESSAGE_TYPE.WELCOME,
-									isFirst
+									isFirst,
 								}
 								encoded = vim.json.encode(response_msg)
-            					conn:send_message(encoded)
+								conn:send_message(encoded)
 								print(decoded[2] .. " has joined.")
-
 							elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
 								forward_to_one_user(wsdata)
-
 							elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
 								print("forwarding buffer content")
 								forward_to_other_users(wsdata)
-
 							elseif decoded[1] == util.MESSAGE_TYPE.INFO then
 								forward_to_other_users(wsdata)
-
 							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 								pending_changes:push(decoded[2])
 								forward_to_other_users(wsdata)
 								revision_number = revision_number + 1
 								local response_msg = {
 									util.MESSAGE_TYPE.ACK,
-									revision_number
+									revision_number,
 								}
 								local encoded = vim.json.encode(response_msg)
-            					conn:send_message(encoded)
+								conn:send_message(encoded)
 								print("forwarded and responeded")
-
 							else
 								error("Unknown message " .. vim.inspect(decoded))
 							end
@@ -99,7 +94,7 @@ local function StartServer(host, port)
 					vim.schedule(function()
 						num_connected = math.max(num_connected - 1, 0)
 						print("Disconnected. " .. num_connected .. " client(s) remaining.")
-						if num_connected  == 0 then
+						if num_connected == 0 then
 							is_initialized = false
 						end
 
@@ -109,13 +104,11 @@ local function StartServer(host, port)
 						}
 						local encoded = vim.json.encode(disconnect)
 						forward_to_other_users(encoded)
-
 					end)
 				end,
-			}
-
-		end
-	}
+			})
+		end,
+	})
 	print("local - " .. "127.0.0.1" .. ":" .. port)
 	print("remote - " .. getPublicIp() .. ":" .. port)
 end
@@ -127,7 +120,6 @@ local function StopServer()
 		print("Server shutdown.")
 	end)
 end
-
 
 return {
 	StartServer = StartServer,
