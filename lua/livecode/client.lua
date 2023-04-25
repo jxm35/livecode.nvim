@@ -204,8 +204,9 @@ local function Start(host, port)
 end
 
 local function Join(host, port)
-    local buf = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_win_set_buf(0, buf)
+--    local buf = vim.api.nvim_create_buf(true, false)
+ --   vim.api.nvim_win_set_buf(0, buf)
+    print(host .. " - " .. port)
     StartClient(host, port)
 end
 
