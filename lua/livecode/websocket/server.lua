@@ -1,5 +1,5 @@
 local bit = require("bit")
-local websocket_util = require("livecode.websocket.util")
+local util = require("livecode.util")
 
 local connections = {}
 local conn_id = 1
@@ -16,7 +16,7 @@ function connection_impl:send_message(str)
 		table.insert(mask, math.random(0, 255))
 	end
 
-	local masked = maskText(str, mask)
+	local masked = util.maskText(str, mask)
 
 	local remain = #masked
 	local sent = 0
@@ -67,7 +67,7 @@ function connection_impl:send_message(str)
 			table.insert(frame, masked[i])
 		end
 
-		local s = convert_bytes_to_string(frame)
+		local s = util.convert_bytes_to_string(frame)
 
 		connections[self.id].sock:write(s)
 		print("written to: " .. self.id)
@@ -136,8 +136,8 @@ function Run_server(opt)
 					--read_payload
 					local data = getdata(paylen)
 					--unmask_data
-					local unmasked = unmask_text(data, mask)
-					data = convert_bytes_to_string(unmasked)
+					local unmasked = util.unmask_text(data, mask)
+					data = util.convert_bytes_to_string(unmasked)
 
 					wsdata = data
 
@@ -172,7 +172,7 @@ function Run_server(opt)
 						local data = getdata(paylen)
 						--unmask_data
 						local unmasked = unmask_text(data, mask)
-						data = convert_bytes_to_string(unmasked)
+						data = util.convert_bytes_to_string(unmasked)
 
 						wsdata = wsdata .. data
 					end

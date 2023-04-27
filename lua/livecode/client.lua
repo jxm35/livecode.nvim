@@ -1,7 +1,6 @@
 local webSockClient = require("livecode.websocket.client")
 local util = require("livecode.util")
 local ot = require("livecode.operational-transformation")
-
 local api_attach = {}
 local agent = 0
 local attached = false
@@ -90,11 +89,11 @@ local function StartClient(host, port)
 									-- end
 									-- print("len " .. #newbytes)
 									print("tick: " .. changedtick)
-									local operationType = util.OPERATION_TYPE.INSERT
+									local operationType = ot.OPERATION_TYPE.INSERT
 									if new_end_row < old_end_row then
-										operationType = util.OPERATION_TYPE.DELETE
+										operationType = ot.OPERATION_TYPE.DELETE
 									elseif new_end_row == old_end_row and new_end_column < old_end_column then
-										operationType = util.OPERATION_TYPE.DELETE
+										operationType = ot.OPERATION_TYPE.DELETE
 									end
 									local operation = ot.newOperation(
 										operationType,
@@ -191,11 +190,11 @@ local function StartClient(host, port)
 								-- end
 								-- print("len " .. #newbytes)
 								print("tick: " .. changedtick)
-								local operationType = util.OPERATION_TYPE.INSERT
+								local operationType = ot.OPERATION_TYPE.INSERT
 								if new_end_row < old_end_row then
-									operationType = util.OPERATION_TYPE.DELETE
+									operationType = ot.OPERATION_TYPE.DELETE
 								elseif new_end_row == old_end_row and new_end_column < old_end_column then
-									operationType = util.OPERATION_TYPE.DELETE
+									operationType = ot.OPERATION_TYPE.DELETE
 								end
 								local operation = ot.newOperation(
 									operationType,
@@ -229,8 +228,8 @@ local function StartClient(host, port)
 					elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 						local operation = ot.newOperationFromMessage(decoded[2])
 						if sent_changes ~= nil then
-							error("should not reallign")
-							operation = ot.realignOperations(sent_changes, operation)
+							error("should nutil.reallign")
+							operation = util.realignOperations(sent_changes, operation)
 						end
 
 						operation:execute(ignore_ticks)
@@ -250,11 +249,19 @@ local function StartClient(host, port)
 end
 
 local function Start(host, port)
-	local buf = vim.api.nvim_get_current_buf()
+	-- local buf = vim.api.nvim_get_current_buf()
 	StartClient(host, port)
 end
 
 local function Join(host, port)
+	if type(host) ~= "string" then
+		print("invalid host defaulting to 127.0.0.1")
+		host = "127.0.0.1"
+	end
+	if type(port) ~= "number" then
+		print("invalid port defaulting to 11359")
+		port = 11359
+	end
 	--    local buf = vim.api.nvim_create_buf(true, false)
 	--   vim.api.nvim_win_set_buf(0, buf)
 	print(host .. " - " .. port)

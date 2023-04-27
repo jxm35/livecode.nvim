@@ -1,5 +1,5 @@
 local bit = require("bit")
-local websocket_util = require("livecode.websocket.util")
+local util = require("livecode.util")
 
 local function Client(opt)
 	local uri = opt.host or "127.0.0.1"
@@ -91,8 +91,8 @@ local function Client(opt)
 						--read_payload
 						local data = getdata(paylen)
 						--unmask_data
-						local unmasked = unmask_text(data, mask)
-						data = convert_bytes_to_string(unmasked)
+						local unmasked = util.unmask_text(data, mask)
+						data = util.convert_bytes_to_string(unmasked)
 
 						wsdata = data
 
@@ -127,7 +127,7 @@ local function Client(opt)
 							local data = getdata(paylen)
 							--unmask_data
 							local unmasked = unmask_text(data, mask)
-							data = convert_bytes_to_string(unmasked)
+							data = util.convert_bytes_to_string(unmasked)
 
 							wsdata = wsdata .. data
 						end
@@ -179,7 +179,7 @@ local function Client(opt)
 		for i = 1, 4 do
 			table.insert(frame, mask[i])
 		end
-		local s = convert_bytes_to_string(frame)
+		local s = util.convert_bytes_to_string(frame)
 
 		client:write(s)
 
@@ -197,7 +197,7 @@ local function Client(opt)
 			table.insert(mask, math.random(0, 255))
 		end
 
-		local masked = maskText(str, mask)
+		local masked = util.maskText(str, mask)
 
 		local remain = #masked
 		local sent = 0
@@ -248,7 +248,7 @@ local function Client(opt)
 				table.insert(frame, masked[i])
 			end
 
-			local s = convert_bytes_to_string(frame)
+			local s = util.convert_bytes_to_string(frame)
 
 			client:write(s)
 

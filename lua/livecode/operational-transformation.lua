@@ -1,5 +1,11 @@
 local util = require("livecode.util")
 
+local OPERATION_TYPE = {
+	INSERT = 1,
+
+	DELETE = 2,
+}
+
 local operation_metatable = {}
 operation_metatable.__index = operation_metatable
 
@@ -13,7 +19,7 @@ type = function(obj)
 end
 
 local function newOperation(opType, start_row, start_column, end_row, end_column, char)
-	if opType ~= util.OPERATION_TYPE.INSERT and opType ~= util.OPERATION_TYPE.DELETE then
+	if opType ~= OPERATION_TYPE.INSERT and opType ~= OPERATION_TYPE.DELETE then
 		error("invalid operation type")
 	end
 	if type(start_row) ~= "number" then
@@ -40,7 +46,7 @@ local function newOperation(opType, start_row, start_column, end_row, end_column
 end
 
 local function newOperationFromMessage(msg)
-	if msg.operationType ~= util.OPERATION_TYPE.INSERT and msg.operationType ~= util.OPERATION_TYPE.DELETE then
+	if msg.operationType ~= OPERATION_TYPE.INSERT and msg.operationType ~= OPERATION_TYPE.DELETE then
 		error("invalid operation type")
 	end
 	if type(msg.start_row) ~= "number" then
@@ -78,8 +84,8 @@ end
 
 function operation_metatable:execute(ignore_table)
 	--vim.api.nvim_buf_set_text(0, 0, 28, 0, 32, {self.character})
-	print("op" .. self.operationType .. " " .. util.OPERATION_TYPE.INSERT)
-	if self.operationType == util.OPERATION_TYPE.INSERT then
+	print("op" .. self.operationType .. " " .. OPERATION_TYPE.INSERT)
+	if self.operationType == OPERATION_TYPE.INSERT then
 		print("INSERT")
 		local current_row = self.start_row
 		local action_row = current_row
@@ -141,7 +147,7 @@ local function transformInsertInsert(local_operation, incoming_operation)
 		or ((local_operation.position == incoming_operation.position) and order() == -1)
 	then
 		return newOperation(
-			util.OPERATION_TYPE.INSERT,
+			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			incoming_operation.start_column + #local_operation.character[1],
 			incoming_operation.end_row,
@@ -160,7 +166,7 @@ local function transformInsertDelete(local_operation, incoming_operation)
 	)
 	if local_operation.position <= incoming_operation.position then
 		return newOperation(
-			util.OPERATION_TYPE.DELETE,
+			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			incoming_operation.start_column + #local_operation.character[1],
 			incoming_operation.end_row,
@@ -179,7 +185,7 @@ local function transformDeleteInsert(local_operation, incoming_operation)
 	)
 	if local_operation.position < incoming_operation.position then
 		return newOperation(
-			util.OPERATION_TYPE.INSERT,
+			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			incoming_operation.start_column - #local_operation.character[1],
 			incoming_operation.end_row,
@@ -198,7 +204,7 @@ local function transformDeleteDelete(local_operation, incoming_operation)
 	)
 	if local_operation.position < incoming_operation.position then
 		return newOperation(
-			util.OPERATION_TYPE.DELETE,
+			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			incoming_operation.start_column - #local_operation.character[1],
 			incoming_operation.end_row,
@@ -218,14 +224,14 @@ local function realignOperations(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	if local_operation.operationType == util.OPERATION_TYPE.INSERT then
-		if incoming_operation.operationType == util.OPERATION_TYPE.INSERT then
+	if local_operation.operationType == OPERATION_TYPE.INSERT then
+		if incoming_operation.operationType == OPERATION_TYPE.INSERT then
 			return transformInsertInsert(local_operation, incoming_operation)
 		else
 			return transformInsertDelete(local_operation, incoming_operation)
 		end
 	else
-		if incoming_operation.operationType == util.OPERATION_TYPE.INSERT then
+		if incoming_operation.operationType == OPERATION_TYPE.INSERT then
 			return transformDeleteInsert(local_operation, incoming_operation)
 		else
 			return transformDeleteDelete(local_operation, incoming_operation)
@@ -237,4 +243,5 @@ return {
 	newOperation = newOperation,
 	newOperationFromMessage = newOperationFromMessage,
 	realignOperations = realignOperations,
+	OPERATION_TYPE = OPERATION_TYPE,
 }

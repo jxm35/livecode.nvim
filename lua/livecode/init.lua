@@ -1,4 +1,4 @@
-local test = require("livecode.test-module")
+-- local test = require("livecode.test-module")
 --local serve = require('livecode.server')
 local server = require("livecode.server")
 local client = require("livecode.client")
@@ -14,7 +14,7 @@ if not config.disable_commands then
 end
 
 return {
-	test = test,
+	-- test = test,
 	startServer = server.StartServer,
 	stopServer = server.StopServer,
 	start = client.start,

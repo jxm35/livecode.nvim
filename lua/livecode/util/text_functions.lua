@@ -1,4 +1,6 @@
-function maskText(str, mask)
+local bit = require("bit")
+
+local function maskText(str, mask)
 	local masked = {}
 	for i = 0, #str - 1 do
 		local j = bit.band(i, 0x3)
@@ -8,7 +10,7 @@ function maskText(str, mask)
 	return masked
 end
 
-function nocase(s)
+local function nocase(s)
 	s = string.gsub(s, "%a", function(c)
 		if string.match(c, "[a-zA-Z]") then
 			return string.format("[%s%s]", string.lower(c), string.upper(c))
@@ -19,7 +21,7 @@ function nocase(s)
 	return s
 end
 
-function convert_bytes_to_string(tab)
+local function convert_bytes_to_string(tab)
 	local s = ""
 	for _, el in ipairs(tab) do
 		s = s .. string.char(el)
@@ -27,7 +29,7 @@ function convert_bytes_to_string(tab)
 	return s
 end
 
-function unmask_text(str, mask)
+local function unmask_text(str, mask)
 	local unmasked = {}
 	for i = 0, #str - 1 do
 		local j = bit.band(i, 0x3)
