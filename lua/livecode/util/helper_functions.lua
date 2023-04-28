@@ -39,9 +39,16 @@ local function unmask_text(str, mask)
 	return unmasked
 end
 
+local function getPublicIp()
+	local output = vim.fn.system({ "ipconfig", "getifaddr", "en0" })
+	return output
+end
+
+
 return {
 	maskText = maskText,
 	nocase = nocase,
 	convert_bytes_to_string = convert_bytes_to_string,
 	unmask_text = unmask_text,
+	getPublicIp = getPublicIp,
 }

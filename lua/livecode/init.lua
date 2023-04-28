@@ -2,7 +2,7 @@
 --local serve = require('livecode.server')
 local server = require("livecode.server")
 local client = require("livecode.client")
-require("livecode.websocket.websocket")
+local command = require("livecode.command.start_server")
 
 local function make_commands()
 	vim.cmd([[command! -nargs=* LCStartServer lua require('livecode.server').StartServer(<f-args>)]])
@@ -21,4 +21,5 @@ return {
 	start = client.start,
 	join = client.join,
 	stop = client.stop,
+	ssComand = command.StartServerCommand
 }

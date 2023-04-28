@@ -22,7 +22,7 @@ type = function(obj)
 	return otype
 end
 
-function connection_metatable:attach(callbacks)
+function connection_metatable:set_callbacks(callbacks)
 	self.callbacks = callbacks
 end
 

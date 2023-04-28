@@ -19,12 +19,22 @@ local function newWebsocket(host, port)
 	local server = vim.loop.new_tcp()
 	server:bind(host, port)
 	local websocket = {
-		conn_id = 1,
+		revision_number = 0,
+		pending_changes = util.newQueue(),
+		revision_log = nil,
+		document_state = nil,
+
+		-----------------
+		active_conn = nil,
+		callbacks = nil,
 		chunk_buffer = "",
+		conn_id = 1,
+		connection_count = 0,
+		connections = {},
+		initialised = false,
 		host = host,
 		port = port,
 		server = server,
-		connections = {},
 	}
 	return setmetatable(websocket, websocket_metatable)
 end
@@ -37,6 +47,10 @@ function websocket_metatable:getdata(amount)
 	local retrieved = string.sub(self.chunk_buffer, 1, amount)
 	self.chunk_buffer = string.sub(self.chunk_buffer, amount + 1)
 	return retrieved
+end
+
+function websocket_metatable:set_callbacks(callbacks)
+	self.callbacks = callbacks
 end
 
 
@@ -138,17 +152,17 @@ local read_coroutine = coroutine.create(function(ws)
 end)
 
 --listen for new connections
-function websocket_metatable:listen(callbacks)
+function websocket_metatable:listen()
 	local ret, err = self.server:listen(128, function(err)
 		local sock = vim.loop.new_tcp()
 		self.server:accept(sock)
 
 		-- call_callbacks_connected
-		if callbacks.on_connect then
+		if self.callbacks.on_connect then
 			self.active_conn = _conn.newConnection(self.conn_id, sock)
 			self.connections[self.conn_id] = self.active_conn
 			self.conn_id = self.conn_id + 1
-			callbacks.on_connect(self.active_conn)
+			self.callbacks.on_connect(self.active_conn)
 		end
 
 		-- register_socket_read_callback
