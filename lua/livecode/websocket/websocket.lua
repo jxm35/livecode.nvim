@@ -112,7 +112,7 @@ local read_coroutine = coroutine.create(function(ws)
 				paylen = bit.lshift(b3, 8) + b4
 			elseif paylen == 127 then
 				paylen = 0
-				rec = self:getdata(8)
+				rec = ws:getdata(8)
 				for i = 1, 8 do -- 64 bits length
 					paylen = bit.lshift(paylen, 8)
 					paylen = paylen + string.byte(string.sub(rec, i, i))
@@ -155,14 +155,15 @@ end)
 function websocket_metatable:listen()
 	local ret, err = self.server:listen(128, function(err)
 		local sock = vim.loop.new_tcp()
+		local conn
 		self.server:accept(sock)
 
 		-- call_callbacks_connected
 		if self.callbacks.on_connect then
-			self.active_conn = _conn.newConnection(self.conn_id, sock)
-			self.connections[self.conn_id] = self.active_conn
+			conn = _conn.newConnection(self.conn_id, sock)
+			self.connections[self.conn_id] = conn
 			self.conn_id = self.conn_id + 1
-			self.callbacks.on_connect(self.active_conn)
+			self.callbacks.on_connect(conn)
 		end
 
 		-- register_socket_read_callback
@@ -170,14 +171,15 @@ function websocket_metatable:listen()
 			if chunk then
 				--read_message_tcp
 				self.chunk_buffer = self.chunk_buffer .. chunk
+				self.active_conn = conn
 				coroutine.resume(read_coroutine, self)
 			else
 				-- close_client_callbacks
-				if self.active_conn and self.active_conn.callbacks.on_disconnect then
-					self.active_conn.callbacks.on_disconnect()
+				if conn and conn.callbacks.on_disconnect then
+					conn.callbacks.on_disconnect()
 				end
 				-- remove_client
-				self.connections[self.active_conn.id] = nil
+				self.connections[conn.id] = nil
 				sock:shutdown()
 				sock:close()
 			end

@@ -11,6 +11,8 @@ local function StartServerCommand(host, port)
 			server.connection_count = server.connection_count + 1
 
 			local function forward_to_other_users(msg)
+				print("active conn id: " .. conn.id)
+				print(vim.inspect(server.connections))
 				for id, client in pairs(server.connections) do
 					if id ~= conn.id then
 						client:send_message(msg)
