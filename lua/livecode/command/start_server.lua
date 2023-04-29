@@ -5,7 +5,7 @@ local function StartServerCommand(host, port)
     local host = host or "0.0.0.0"
 	local port = port or 11359
 
-    local server = websocket_util.newWebsocket(host, port)
+    local server = websocket_util.newWebsocket(host, port, true)
     local callbacks = {
         on_connect = function(conn)
 			server.connection_count = server.connection_count + 1
@@ -97,7 +97,6 @@ local function StartServerCommand(host, port)
             conn:set_callbacks(conn_callbacks)
 		end,
     }
-
     server:set_callbacks(callbacks)
     server:listen()
     print("server listening...")

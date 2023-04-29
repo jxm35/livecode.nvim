@@ -15,26 +15,43 @@ type = function(obj)
 	return otype
 end
 
-local function newWebsocket(host, port)
-	local server = vim.loop.new_tcp()
-	server:bind(host, port)
+local function newWebsocket(host, port, server)
+	local ws_server = nil
+	local active_conn = nil
+	if server == true then
+		ws_server = vim.loop.new_tcp()
+		ws_server:bind(host, port)
+	else
+		active_conn = _conn.newConnection(1, vim.loop.new_tcp())
+	end
+	
 	local websocket = {
-		revision_number = 0,
 		pending_changes = util.newQueue(),
-		revision_log = nil,
 		document_state = nil,
-
-		-----------------
-		active_conn = nil,
+		-----------------	server ot
+		revision_number = 0,
+		revision_log = nil,
+		----------------- client ot
+		last_synced_revision = 0,
+		sent_changes = nil,
+		----------------- shared variables
+		active_conn = active_conn,
 		callbacks = nil,
 		chunk_buffer = "",
+		host = host,
+		port = port,
+		----------------- server variables
 		conn_id = 1,
 		connection_count = 0,
 		connections = {},
 		initialised = false,
-		host = host,
-		port = port,
-		server = server,
+		server = ws_server,
+		---------------- client variables
+		api_attach = {},
+		ignore_ticks = {},
+		agent = 0,
+		attached = false,
+		DETACH = false,
 	}
 	return setmetatable(websocket, websocket_metatable)
 end
@@ -51,6 +68,9 @@ end
 
 function websocket_metatable:set_callbacks(callbacks)
 	self.callbacks = callbacks
+end
+function websocket_metatable:set_conn_callbacks(callbacks)
+	self.active_conn.callbacks = callbacks
 end
 
 
@@ -211,12 +231,12 @@ end
 ---- client functions
 
 -- connect to existing socket
-function websocket_metatable:connect(client, host, port, callbacks)
-	local ret, err = client:connect(
-		host,
-		port,
+function websocket_metatable:connect()
+	local ret, err = self.active_conn.sock:connect(
+		self.host,
+		self.port,
 		vim.schedule_wrap(function(err)
-			self.on_disconnect = callbacks.on_disconnect
+			self.on_disconnect = self.active_conn.callbacks.on_disconnect
 
 			if err then
 				if self.on_disconnect then
@@ -227,91 +247,8 @@ function websocket_metatable:connect(client, host, port, callbacks)
 				return
 			end
 
-			local wsread_co = coroutine.create(function()
-				while true do
-					local wsdata = ""
-					local fin
-
-					local rec = self:getdata(2)
-					local b1 = string.byte(string.sub(rec, 1, 1))
-					local b2 = string.byte(string.sub(rec, 2, 2))
-					local opcode = bit.band(b1, 0xF)
-					fin = bit.rshift(b1, 7)
-
-					local paylen = bit.band(b2, 0x7F)
-					if paylen == 126 then -- 16 bits length
-						rec = self:getdata(2)
-						local b3 = string.byte(string.sub(rec, 1, 1))
-						local b4 = string.byte(string.sub(rec, 2, 2))
-						paylen = bit.lshift(b3, 8) + b4
-					elseif paylen == 127 then
-						paylen = 0
-						rec = self:getdata(8)
-						for i = 1, 8 do -- 64 bits length
-							paylen = bit.lshift(paylen, 8)
-							paylen = paylen + string.byte(string.sub(rec, i, i))
-						end
-					end
-
-					--read_mask
-					local mask = {}
-					rec = self:getdata(4)
-					for i = 1, 4 do
-						table.insert(mask, string.byte(string.sub(rec, i, i)))
-					end
-					--read_payload
-					local data = getdata(paylen)
-					--unmask_data
-					local unmasked = util.unmask_text(data, mask)
-					data = util.convert_bytes_to_string(unmasked)
-
-					wsdata = data
-
-					while fin == 0 do
-						rec = self:getdata(2)
-						b1 = string.byte(string.sub(rec, 1, 1))
-						b2 = string.byte(string.sub(rec, 2, 2))
-						fin = bit.rshift(b1, 7)
-
-						local paylen = bit.band(b2, 0x7F)
-						if paylen == 126 then -- 16 bits length
-							local rec = self:getdata(2)
-							local b3 = string.byte(string.sub(rec, 1, 1))
-							local b4 = string.byte(string.sub(rec, 2, 2))
-							paylen = bit.lshift(b3, 8) + b4
-						elseif paylen == 127 then
-							paylen = 0
-							local rec = self:getdata(8)
-							for i = 1, 8 do -- 64 bits length
-								paylen = bit.lshift(paylen, 8)
-								paylen = paylen + string.byte(string.sub(rec, i, i))
-							end
-						end
-
-						--read_mask
-						mask = {}
-						rec = self:getdata(4)
-						for i = 1, 4 do
-							table.insert(mask, string.byte(string.sub(rec, i, i)))
-						end
-						--read_payload
-						data = self:getdata(paylen)
-						--unmask_data
-						unmasked = util.unmask_text(data, mask)
-						data = util.convert_bytes_to_string(unmasked)
-
-						wsdata = wsdata .. data
-					end
-
-					if opcode == 0x1 then
-						if callbacks.on_text then
-							callbacks.on_text(wsdata)
-						end
-					end
-				end
-			end)
-
-			client:read_start(vim.schedule_wrap(function(err, chunk)
+			self.active_conn.sock:read_start(vim.schedule_wrap(function(err, chunk)
+				print("recieved")
 				if err then
 					if self.on_disconnect then
 						self.on_disconnect()
@@ -323,11 +260,11 @@ function websocket_metatable:connect(client, host, port, callbacks)
 
 				if chunk then
 					self.chunk_buffer = self.chunk_buffer .. chunk
-					coroutine.resume(wsread_co)
+					coroutine.resume(read_coroutine, self)
 				end
 			end))
-			if callbacks.on_connect then
-				callbacks.on_connect()
+			if self.active_conn.callbacks.on_connect then
+				self.active_conn.callbacks.on_connect()
 			end
 		end)
 	)

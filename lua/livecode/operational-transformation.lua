@@ -72,14 +72,14 @@ local function newOperationFromMessage(msg)
 	return setmetatable(op, operation_metatable)
 end
 
-function operation_metatable:send(client)
+function operation_metatable:send(conn)
 	--assert(type(client) == "client", "ERROR: sending from invalid socket.")
 	local msg = {
 		util.MESSAGE_TYPE.EDIT,
 		self,
 	}
 	local encoded = vim.json.encode(msg)
-	client:send_message(encoded)
+	conn:send_message(encoded)
 end
 
 function operation_metatable:execute(ignore_table)
