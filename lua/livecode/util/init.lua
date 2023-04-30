@@ -10,5 +10,5 @@ return {
 	convert_bytes_to_string = helper.convert_bytes_to_string,
 	unmask_text = helper.unmask_text,
 	getPublicIp = helper.getPublicIp,
-
+	read_helper = helper.read_helper,
 }

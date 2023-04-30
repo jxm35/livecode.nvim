@@ -74,7 +74,7 @@ function websocket_metatable:set_conn_callbacks(callbacks)
 end
 
 
-local read_coroutine = coroutine.create(function(ws)
+local read_helper = function(ws)
 	if type(ws) ~= "websocket" then
 		error(type(ws) .. "is not a websocket")
 	end
@@ -169,8 +169,10 @@ local read_coroutine = coroutine.create(function(ws)
 			break
 		end
 	end
-end)
+end
 
+local client_reader = coroutine.create(read_helper)
+local server_reader = coroutine.create(read_helper)
 --listen for new connections
 function websocket_metatable:listen()
 	local ret, err = self.server:listen(128, function(err)
@@ -192,7 +194,7 @@ function websocket_metatable:listen()
 				--read_message_tcp
 				self.chunk_buffer = self.chunk_buffer .. chunk
 				self.active_conn = conn
-				coroutine.resume(read_coroutine, self)
+				coroutine.resume(server_reader, self)
 			else
 				-- close_client_callbacks
 				if conn and conn.callbacks.on_disconnect then
@@ -248,7 +250,6 @@ function websocket_metatable:connect()
 			end
 
 			self.active_conn.sock:read_start(vim.schedule_wrap(function(err, chunk)
-				print("recieved")
 				if err then
 					if self.on_disconnect then
 						self.on_disconnect()
@@ -260,7 +261,7 @@ function websocket_metatable:connect()
 
 				if chunk then
 					self.chunk_buffer = self.chunk_buffer .. chunk
-					coroutine.resume(read_coroutine, self)
+					coroutine.resume(client_reader, self)
 				end
 			end))
 			if self.active_conn.callbacks.on_connect then
