@@ -3,6 +3,7 @@
 -- local server = require("livecode.server")
 -- local client = require("livecode.client")
 local command = require("livecode.command")
+local state = require("livecode.state")
 
 local function make_commands()
 	vim.cmd([[command! -nargs=* LCStartServer lua require('livecode.server').StartServer(<f-args>)]])
@@ -24,4 +25,5 @@ return {
 	StartServer = command.StartServerCommand,
 	Join = command.StartClientCommand,
 	StartSession = command.StartSessionCommand,
+	SetActiveBuffer = command.SetActiveBufferCommand,
 }

@@ -121,8 +121,8 @@ local function StartClientCommand(host, port)
 
 						local obj = {
 							util.MESSAGE_TYPE.BUFFER_CONTENT,
+							decoded[2],
 							bufname,
-							rem,
 							"pidslist",
 							lines,
 						}
@@ -130,8 +130,7 @@ local function StartClientCommand(host, port)
 						client.active_conn:send_message(encoded)
 					elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
 						print("loading new buffer")
-						local _, bufname, bufid, pidslist, content = unpack(decoded)
-						local ag, bufid = unpack(bufid)
+						local _, _, bufname, pidslist, content = unpack(decoded)
 						local buf = vim.api.nvim_create_buf(true, false)
 						vim.api.nvim_win_set_buf(0, buf)
 						vim.api.nvim_buf_set_name(buf, "[livecode] " .. bufname)
@@ -172,10 +171,6 @@ local function StartClientCommand(host, port)
 									start_column + new_end_column,
 									{}
 								)
-								-- for i,v in ipairs(newbytes) do
-								--     print("char " .. i .. " '" .. newbytes[i] .. "'")
-								-- end
-								-- print("len " .. #newbytes)
 								print("tick: " .. changedtick)
 								local operationType = ot.OPERATION_TYPE.INSERT
 								if new_end_row < old_end_row then
@@ -235,6 +230,7 @@ local function StartClientCommand(host, port)
 	}
     client:set_conn_callbacks(callbacks)
     client:connect()
+	Client = client
 end
 
 return {

@@ -14,6 +14,7 @@ vim.api.nvim_set_keymap("n", ",c", ":lua Livecode.StartServer()<cr>", {})
 -- vim.api.nvim_set_keymap("n", ",s", ":lua Livecode.start()<cr>", {})
 vim.api.nvim_set_keymap("n", ",s", ":lua Livecode.StartSession()<cr>", {})
 vim.api.nvim_set_keymap("n", ",j", ":lua Livecode.Join()<cr>", {})
+vim.api.nvim_set_keymap("n", ",b", ":lua Livecode.SetActiveBuffer()<cr>", {})
 
 vim.api.nvim_set_keymap("n", ",d", ":lua Livecode.stopServer()<cr>", {})
 vim.api.nvim_set_keymap("n", ",r", ":lua Livecode.join('192.168.0.16', 11359)<cr>", {})

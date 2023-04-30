@@ -53,10 +53,23 @@ local function StartServerCommand(host, port)
 								conn:send_message(encoded)
 								print(decoded[2] .. " has joined.")
 							elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
-								forward_to_one_user(wsdata)
+								decoded[2] = conn.id
+								local encoded = vim.json.encode(decoded)
+								forward_to_one_user(encoded)
 							elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
 								print("forwarding buffer content")
-								forward_to_other_users(wsdata)
+								if decoded[2] == -1 then
+									forward_to_other_users(wsdata)
+								else
+									-- forward to the user in decoded[2]
+									for _, client in pairs(server.connections) do
+										if client.id == decoded[2] then
+											client:send_message(wsdata)
+											break
+										end
+									end
+								end
+								
 							elseif decoded[1] == util.MESSAGE_TYPE.INFO then
 								forward_to_other_users(wsdata)
 							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
@@ -102,7 +115,7 @@ local function StartServerCommand(host, port)
     print("server listening...")
     print("local - " .. "127.0.0.1" .. ":" .. port)
 	print("remote - " .. util.getPublicIp() .. ":" .. port)
-    return server
+	Server = server
 end
 
 return {
