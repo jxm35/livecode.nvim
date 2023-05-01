@@ -25,7 +25,6 @@ local function StartClientCommand(host, port)
 		end,
 
 		on_text = function(wsdata)
-            print("recieved smth")
 			vim.schedule(function()
 				local decoded = vim.json.decode(wsdata)
 				if decoded then
@@ -171,7 +170,7 @@ local function StartClientCommand(host, port)
 									start_column + new_end_column,
 									{}
 								)
-								print("tick: " .. changedtick)
+								print(vim.inspect(newbytes))
 								local operationType = ot.OPERATION_TYPE.INSERT
 								if new_end_row < old_end_row then
 									operationType = ot.OPERATION_TYPE.DELETE
@@ -203,7 +202,7 @@ local function StartClientCommand(host, port)
 						client.sent_changes = nil
 						if client.pending_changes:isEmpty() == false then
 							local operation = client.pending_changes:dequeue()
-							operation:send(client)
+							operation:send(client.active_conn)
 							client.sent_changes = operation
 							print("new operation sent")
 						end

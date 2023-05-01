@@ -97,23 +97,21 @@ function operation_metatable:execute(ignore_table)
 			self.start_column,
 			current_row,
 			self.start_column,
-			{ self.character[1] }
+			self.character
 		)
-		current_row = current_row + 1
-		for index, value in ipairs(self.character) do
-			print("value: '" .. value .. "'")
-			if index > 1 then
-				-- pasted text gets put a line too high
-				if value == "" and self.start_column == 0 then
-					action_row = current_row - 1
-				else
-					action_row = current_row
-				end
-				next_tick = vim.api.nvim_buf_get_changedtick(0)
-				ignore_table[next_tick] = true
-				vim.api.nvim_buf_set_lines(0, action_row, action_row, false, { value })
-				current_row = current_row + 1
-			end
+		-- fix glitches when pressing the enter key
+		if #self.character == 2 and self.character[1] == "" then
+			local col = math.min(#self.character[2], self.start_column)
+			next_tick = vim.api.nvim_buf_get_changedtick(0)
+			ignore_table[next_tick] = true
+			vim.api.nvim_buf_set_text(
+				0,
+				self.start_row+1,
+				0,
+				self.start_row+1,
+				col,
+				{}
+			)
 		end
 	else
 		print("DELETE")
@@ -124,7 +122,8 @@ function operation_metatable:execute(ignore_table)
 		if self.end_row > 0 and self.end_column > 0 then
 			action_column = self.end_column
 		end
-		if self.start_column > 0 and self.end_row == 1 and self.end_column == 0 then
+		if self.start_column > 0 and self.end_row == 1 and self.end_column == 0 and self.start_column == 0 then
+			print("here somehow")
 			sr = self.start_row + 1
 			sc = 0
 			er = sr + 1

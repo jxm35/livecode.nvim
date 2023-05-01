@@ -31,7 +31,6 @@ function connection_metatable:set_socket(sock)
 end
 
 function connection_metatable:send_message(str)
-	print("sending:" .. str)
 	local mask = {}
 	for i = 1, 4 do
 		table.insert(mask, math.random(0, 255))
