@@ -1,7 +1,3 @@
--- local test = require("livecode.test-module")
---local serve = require('livecode.server')
--- local server = require("livecode.server")
--- local client = require("livecode.client")
 local command = require("livecode.command")
 local state = require("livecode.state")
 
@@ -16,14 +12,9 @@ if not config.disable_commands then
 end
 
 return {
-	-- test = test,
-	-- startServer = server.StartServer,
-	-- stopServer = server.StopServer,
-	-- start = client.start,
-	-- join = client.join,
-	-- stop = client.stop,
 	StartServer = command.StartServerCommand,
 	Join = command.StartClientCommand,
 	StartSession = command.StartSessionCommand,
 	SetActiveBuffer = command.SetActiveBufferCommand,
+	Stop = command.StopCommand,
 }
