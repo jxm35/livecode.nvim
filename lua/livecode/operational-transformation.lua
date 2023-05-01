@@ -122,10 +122,8 @@ function operation_metatable:execute(ignore_table)
 		if self.end_row > 0 and self.end_column > 0 then
 			action_column = self.end_column
 		end
+		-- for deleting the first character of the line
 		if self.start_column > 0 and self.end_row == 1 and self.end_column == 0 then
-			sr = self.start_row + 1
-			sc = 0
-			er = sr + 1
 			action_column = 0
 		end
 		print(sr .. " " .. sc .. " " .. er .. " " .. action_column)
