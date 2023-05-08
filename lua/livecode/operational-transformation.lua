@@ -139,8 +139,8 @@ local function transformInsertInsert(local_operation, incoming_operation)
 		"Error: invalid operation"
 	)
 	if
-		(local_operation.position < incoming_operation.position)
-		or ((local_operation.position == incoming_operation.position) and order() == -1)
+		(local_operation.start_column < incoming_operation.start_column)
+		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
 	then
 		return newOperation(
 			OPERATION_TYPE.INSERT,
@@ -160,7 +160,7 @@ local function transformInsertDelete(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	if local_operation.position <= incoming_operation.position then
+	if local_operation.start_column <= incoming_operation.start_column then
 		return newOperation(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
@@ -179,7 +179,7 @@ local function transformDeleteInsert(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	if local_operation.position < incoming_operation.position then
+	if local_operation.start_column < incoming_operation.start_column then
 		return newOperation(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
@@ -198,7 +198,7 @@ local function transformDeleteDelete(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	if local_operation.position < incoming_operation.position then
+	if local_operation.start_column < incoming_operation.start_column then
 		return newOperation(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
@@ -207,7 +207,7 @@ local function transformDeleteDelete(local_operation, incoming_operation)
 			incoming_operation.end_column - #local_operation.character[1],
 			incoming_operation.character
 		) -- Tdd(Del[3], Del[4]) = Del[3]
-	elseif local_operation.position > incoming_operation.position then
+	elseif local_operation.start_column > incoming_operation.start_column then
 		return incoming_operation -- Tdd(Del[3], Del[1]) = Del[2]
 	else
 		error("deleted same char twice")
@@ -220,6 +220,9 @@ local function realignOperations(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	if local_operation.start_row ~= incoming_operation.start_row then
+		return incoming_operation
+	end
 	if local_operation.operationType == OPERATION_TYPE.INSERT then
 		if incoming_operation.operationType == OPERATION_TYPE.INSERT then
 			return transformInsertInsert(local_operation, incoming_operation)

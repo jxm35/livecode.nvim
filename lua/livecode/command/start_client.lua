@@ -209,7 +209,6 @@ local function StartClientCommand(host, port)
 					elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 						local operation = ot.newOperationFromMessage(decoded[2])
 						if client.sent_changes ~= nil then
-							error("should nutil.reallign")
 							operation = util.realignOperations(client.sent_changes, operation)
 						end
 
