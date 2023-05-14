@@ -209,7 +209,7 @@ local function StartClientCommand(host, port)
 					elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 						local operation = ot.newOperationFromMessage(decoded[2])
 						if client.sent_changes ~= nil then
-							operation = util.realignOperations(client.sent_changes, operation)
+							operation = ot.realignOperations(client.sent_changes, operation)
 						end
 
 						operation:execute(client.ignore_ticks)
