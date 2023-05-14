@@ -210,6 +210,11 @@ local function StartClientCommand(host, port)
 						local operation = ot.newOperationFromMessage(decoded[2])
 						if client.sent_changes ~= nil then
 							operation = ot.realignOperations(client.sent_changes, operation)
+							if client.pending_changes ~= false then
+								for _, pending_op in ipairs(client.pending_changes:viewAll()) do
+									operation = ot.realignOperations(pending_op, operation)
+								end
+							end
 						end
 
 						operation:execute(client.ignore_ticks)

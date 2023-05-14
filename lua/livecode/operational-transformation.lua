@@ -133,21 +133,35 @@ function operation_metatable:execute(ignore_table)
 	end
 end
 
-local function transformInsertInsert(local_operation, incoming_operation)
+local function transformInsertInsert(local_operation, incoming_operation, local_row_num, incoming_row_num)
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	assert(
+		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
+		"Error: invalid row number types"
+	)
 	if
-		(local_operation.start_column < incoming_operation.start_column)
-		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
+		(local_operation.start_column <= incoming_operation.start_column)
+--		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
 	then
+		local new_start_col = incoming_operation.start_column
+		local new_end_col = incoming_operation.end_column
+		
+		if incoming_row_num == 1 then -- we shouldn't change the start col if the text is inserted on another row
+			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
+		end
+		if incoming_row_num == #incoming_operation.character then
+			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num]
+		end
+
 		return newOperation(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
-			incoming_operation.start_column + #local_operation.character[1],
+			new_start_col,
 			incoming_operation.end_row,
-			incoming_operation.end_column + #local_operation.character[1],
+			new_end_col,
 			incoming_operation.character
 		) -- Tii(Ins[3, ‘a’], Ins[4, ‘b’]) = Ins[3, ‘a’]
 	else
@@ -155,18 +169,32 @@ local function transformInsertInsert(local_operation, incoming_operation)
 	end
 end
 
-local function transformInsertDelete(local_operation, incoming_operation)
+local function transformInsertDelete(local_operation, incoming_operation, local_row_num, incoming_row_num)
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	assert(
+		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
+		"Error: invalid row number types"
+	)
 	if local_operation.start_column <= incoming_operation.start_column then
+		local new_start_col = incoming_operation.start_column
+		local new_end_col = incoming_operation.end_column
+
+		if incoming_row_num == 1 then
+			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
+		end
+		if incoming_row_num == #incoming_operation.character then
+			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num]
+		end
+
 		return newOperation(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
-			incoming_operation.start_column + #local_operation.character[1],
+			new_start_col,
 			incoming_operation.end_row,
-			incoming_operation.end_column + #local_operation.character[1],
+			new_end_col,
 			incoming_operation.character
 		) -- Tid(Ins[3, ‘a’], Del[4]) = Ins[3, ‘a’]
 	else
@@ -174,18 +202,32 @@ local function transformInsertDelete(local_operation, incoming_operation)
 	end
 end
 
-local function transformDeleteInsert(local_operation, incoming_operation)
+local function transformDeleteInsert(local_operation, incoming_operation, local_row_num, incoming_row_num)
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	assert(
+		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
+		"Error: invalid row number types"
+	)
 	if local_operation.start_column < incoming_operation.start_column then
+		local new_start_col = incoming_operation.start_column
+		local new_end_col = incoming_operation.end_column
+		
+		if incoming_row_num == 1 then
+			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
+		end
+		if incoming_row_num == #incoming_operation.character then
+			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num]
+		end
+
 		return newOperation(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
-			incoming_operation.start_column - #local_operation.character[1],
+			new_start_col,
 			incoming_operation.end_row,
-			incoming_operation.end_column - #local_operation.character[1],
+			new_end_col,
 			incoming_operation.character
 		)
 	else
@@ -193,18 +235,32 @@ local function transformDeleteInsert(local_operation, incoming_operation)
 	end
 end
 
-local function transformDeleteDelete(local_operation, incoming_operation)
+local function transformDeleteDelete(local_operation, incoming_operation, local_row_num, incoming_row_num)
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	assert(
+		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
+		"Error: invalid row number types"
+	)
 	if local_operation.start_column < incoming_operation.start_column then
+		local new_start_col = incoming_operation.start_column
+		local new_end_col = incoming_operation.end_column
+		
+		if incoming_row_num == 1 then
+			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
+		end
+		if incoming_row_num == #incoming_operation.character then
+			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num]
+		end
+
 		return newOperation(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
-			incoming_operation.start_column - #local_operation.character[1],
+			new_start_col,
 			incoming_operation.end_row,
-			incoming_operation.end_column - #local_operation.character[1],
+			new_end_col,
 			incoming_operation.character
 		) -- Tdd(Del[3], Del[4]) = Del[3]
 	elseif local_operation.start_column > incoming_operation.start_column then
@@ -220,20 +276,44 @@ local function realignOperations(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	if local_operation.start_row ~= incoming_operation.start_row then
-		return incoming_operation
+
+	-- handle changes that affect which line we have changed
+	local line_diff = local_operation.new_end_row-local_operation.end_row
+	if incoming_operation.start_row > local_operation.start_row then
+		incoming_operation.start_row = incoming_operation.start_row + line_diff
+		incoming_operation.end_row = incoming_operation.end_row + line_diff
 	end
-	if local_operation.operationType == OPERATION_TYPE.INSERT then
-		if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-			return transformInsertInsert(local_operation, incoming_operation)
-		else
-			return transformInsertDelete(local_operation, incoming_operation)
+
+	-- check if any changes are on the same row in each document
+	local local_rows_in_common = {}
+	local incoming_rows_in_common = {}
+	local local_row_num = 1
+	local incoming_row_num = 1
+	for i = local_operation.start_row, local_operation.start_row+local_operation.new_end_row, 1 do
+		for j = incoming_operation.start_row, incoming_operation.start_row+incoming_operation.new_end_row do
+			if i == j then
+				table.insert(local_rows_in_common, local_row_num)
+				table.insert(incoming_rows_in_common, incoming_row_num)
+			end
+			incoming_row_num = incoming_row_num + 1
 		end
-	else
-		if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-			return transformDeleteInsert(local_operation, incoming_operation)
+		local_row_num = local_row_num + 1
+	end
+
+	-- handle changes on the same line
+	for index,row_num in ipairs(local_rows_in_common) do
+		if local_operation.operationType == OPERATION_TYPE.INSERT then
+			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
+				return transformInsertInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+			else
+				return transformInsertDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+			end
 		else
-			return transformDeleteDelete(local_operation, incoming_operation)
+			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
+				return transformDeleteInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+			else
+				return transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+			end
 		end
 	end
 end

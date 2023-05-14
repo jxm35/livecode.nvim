@@ -46,6 +46,19 @@ function queue_metatable:peek()
 	return value
 end
 
+function queue_metatable:viewAll()
+	if self.first > self.last then
+		error("list is empty")
+	end
+	local current = self.first
+	local valuesTable = {}
+	while current < self.last do
+		table.insert(valuesTable, self[current])
+		current = current+1
+	end
+	return valuesTable
+end
+
 function queue_metatable:isEmpty()
 	if self.first > self.last then
 		return true
