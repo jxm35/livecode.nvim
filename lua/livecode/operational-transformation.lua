@@ -335,18 +335,20 @@ local function realignOperations(local_operation, incoming_operation)
 	for index,row_num in ipairs(local_rows_in_common) do
 		if local_operation.operationType == OPERATION_TYPE.INSERT then
 			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-				return transformInsertInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =  transformInsertInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			else
-				return transformInsertDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =   transformInsertDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		else
 			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-				return transformDeleteInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =   transformDeleteInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			else
-				return transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =   transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		end
 	end
+
+	return incoming_operation
 end
 
 return {
