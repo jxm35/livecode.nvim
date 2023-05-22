@@ -45,6 +45,35 @@ local function newOperation(opType, start_row, start_column, end_row, end_column
 	return setmetatable(op, operation_metatable)
 end
 
+local function newOperationExtended(opType, start_row, start_column, end_row, end_column, new_end_row, new_end_column, char)
+	if opType ~= OPERATION_TYPE.INSERT and opType ~= OPERATION_TYPE.DELETE then
+		error("invalid operation type")
+	end
+	if type(start_row) ~= "number" then
+		error("invalid start_row")
+	elseif type(start_column) ~= "number" then
+		error("invalid start_column")
+	elseif type(end_row) ~= "number" then
+		error("invalid end_row")
+	elseif type(end_column) ~= "number" then
+		error("invalid end_column")
+	elseif type(char) ~= "table" or type(char[1]) ~= "string" then
+		error("invalid character")
+	end
+
+	local op = {
+		operationType = opType,
+		start_row = start_row,
+		start_column = start_column,
+		end_row = end_row,
+		end_column = end_column,
+		new_end_row = new_end_row,
+		new_end_column = new_end_column,
+		character = char,
+	}
+	return setmetatable(op, operation_metatable)
+end
+
 local function newOperationFromMessage(msg)
 	if msg.operationType ~= OPERATION_TYPE.INSERT and msg.operationType ~= OPERATION_TYPE.DELETE then
 		error("invalid operation type")
@@ -67,6 +96,8 @@ local function newOperationFromMessage(msg)
 		start_column = msg.start_column,
 		end_row = msg.end_row,
 		end_column = msg.end_column,
+		new_end_row = msg.new_end_row,
+		new_end_column = msg.new_end_cloumn,
 		character = msg.character,
 	}
 	return setmetatable(op, operation_metatable)
@@ -320,6 +351,7 @@ end
 
 return {
 	newOperation = newOperation,
+	newOperationExtended = newOperationExtended,
 	newOperationFromMessage = newOperationFromMessage,
 	realignOperations = realignOperations,
 	OPERATION_TYPE = OPERATION_TYPE,

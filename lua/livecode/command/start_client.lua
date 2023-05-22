@@ -81,12 +81,14 @@ local function StartClientCommand(host, port)
 									elseif new_end_row == old_end_row and new_end_column < old_end_column then
 										operationType = ot.OPERATION_TYPE.DELETE
 									end
-									local operation = ot.newOperation(
+									local operation = ot.newOperationExtended(
 										operationType,
 										start_row,
 										start_column,
 										old_end_row,
 										old_end_column,
+										new_end_row,
+										new_end_column,
 										newbytes
 									)
 									if client.sent_changes == nil then
@@ -177,12 +179,14 @@ local function StartClientCommand(host, port)
 								elseif new_end_row == old_end_row and new_end_column < old_end_column then
 									operationType = ot.OPERATION_TYPE.DELETE
 								end
-								local operation = ot.newOperation(
+								local operation = ot.newOperationExtended(
 									operationType,
 									start_row,
 									start_column,
 									old_end_row,
 									old_end_column,
+									new_end_row,
+									new_end_column,
 									newbytes
 								)
 								if client.sent_changes == nil then
