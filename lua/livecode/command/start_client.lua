@@ -131,7 +131,8 @@ local function StartClientCommand(host, port)
 						client.active_conn:send_message(encoded)
 					elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
 						print("loading new buffer")
-						local _, _, bufname, pidslist, content = unpack(decoded)
+						local _, _, bufname, pidslist, content, lsr = unpack(decoded)
+						client.last_synced_revision = lsr
 						local buf = vim.api.nvim_create_buf(true, false)
 						vim.api.nvim_win_set_buf(0, buf)
 						vim.api.nvim_buf_set_name(buf, "[livecode] " .. bufname)

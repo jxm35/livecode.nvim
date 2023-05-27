@@ -29,10 +29,10 @@ local function newWebsocket(host, port, server)
 		pending_changes = util.newQueue(),
 		document_state = nil,
 		-----------------	server ot
-		revision_number = 0,
+		revision_number = 1,
 		revision_log = nil,
 		----------------- client ot
-		last_synced_revision = 0,
+		last_synced_revision = 1,
 		sent_changes = nil,
 		processed_changes = {},
 		----------------- shared variables

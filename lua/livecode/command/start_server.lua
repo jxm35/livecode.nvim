@@ -58,13 +58,15 @@ local function StartServerCommand(host, port)
 								forward_to_one_user(encoded)
 							elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
 								print("forwarding buffer content")
+								decoded[6] = server.revision_number
+								local msg = vim.json.encode(decoded)
 								if decoded[2] == -1 then
-									forward_to_other_users(wsdata)
+									forward_to_other_users(msg)
 								else
 									-- forward to the user in decoded[2]
 									for _, client in pairs(server.connections) do
 										if client.id == decoded[2] then
-											client:send_message(wsdata)
+											client:send_message(msg)
 											break
 										end
 									end
