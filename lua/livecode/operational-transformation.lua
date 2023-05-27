@@ -185,7 +185,7 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
 		"Error: invalid row number types"
 	)
-	print("-----------------change-char:" .. incoming_operation.character)
+	print("-----------------change-char:" .. incoming_operation.character[1])
 	if
 		(local_operation.start_column <= incoming_operation.start_column)
 --		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)

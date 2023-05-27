@@ -218,7 +218,7 @@ local function StartClientCommand(host, port)
 						print("recieved: " .. operation.start_row .. "," .. operation.start_column .. "," .. operation.end_row .. "," .. operation.end_column)
 						print(operation.new_end_row .. "," .. operation.new_end_column)
 						-- iterate through processed_changes
-						for i = change_revision, client.last_synced_revision, 1 do
+						for i = change_revision+1, client.last_synced_revision, 1 do
 							if client.processed_changes[i] ~= nil then
 								operation = ot.realignOperations(client.processed_changes[i], operation)
 							end
