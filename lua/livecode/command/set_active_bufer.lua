@@ -53,7 +53,7 @@ local function SetActiveBuffer()
                 newbytes
             )
             if Client.sent_changes == nil then
-                operation:send(Client.active_conn)
+                operation:send(Client.active_conn, Client.last_synced_revision)
                 Client.sent_changes = operation
                 print("sent operation")
             else

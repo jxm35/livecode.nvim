@@ -57,6 +57,10 @@ local function newOperationExtended(opType, start_row, start_column, end_row, en
 		error("invalid end_row")
 	elseif type(end_column) ~= "number" then
 		error("invalid end_column")
+	elseif type(new_end_row) ~= "number" then
+		error("invalid end_row")
+	elseif type(new_end_column) ~= "number" then
+		error("invalid end_column")
 	elseif type(char) ~= "table" or type(char[1]) ~= "string" then
 		error("invalid character")
 	end
@@ -86,6 +90,10 @@ local function newOperationFromMessage(msg)
 		error("invalid end_row")
 	elseif type(msg.end_column) ~= "number" then
 		error("invalid end_column")
+	elseif type(msg.new_end_row) ~= "number" then
+		error("invalid end_row")
+	elseif type(msg.new_end_column) ~= "number" then
+		error("invalid end_column")
 	elseif type(msg.character) ~= "table" or type(msg.character[1]) ~= "string" then
 		error("invalid character")
 	end
@@ -97,17 +105,21 @@ local function newOperationFromMessage(msg)
 		end_row = msg.end_row,
 		end_column = msg.end_column,
 		new_end_row = msg.new_end_row,
-		new_end_column = msg.new_end_cloumn,
+		new_end_column = msg.new_end_column,
 		character = msg.character,
 	}
 	return setmetatable(op, operation_metatable)
 end
 
-function operation_metatable:send(conn)
+function operation_metatable:send(conn, lsr)
 	--assert(type(client) == "client", "ERROR: sending from invalid socket.")
+	if type(lsr) ~= "number" then
+		error("invalid last synced row")
+	end
 	local msg = {
 		util.MESSAGE_TYPE.EDIT,
 		self,
+		lsr,
 	}
 	local encoded = vim.json.encode(msg)
 	conn:send_message(encoded)
@@ -173,6 +185,7 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
 		"Error: invalid row number types"
 	)
+	print("-----------------change-char:" .. incoming_operation.character)
 	if
 		(local_operation.start_column <= incoming_operation.start_column)
 --		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
@@ -307,6 +320,7 @@ local function realignOperations(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
+	print("----------------------checking-char:" .. incoming_operation.character[1])
 
 	-- handle changes that affect which line we have changed
 	local line_diff = local_operation.new_end_row-local_operation.end_row

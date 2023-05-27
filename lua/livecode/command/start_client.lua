@@ -92,7 +92,7 @@ local function StartClientCommand(host, port)
 										newbytes
 									)
 									if client.sent_changes == nil then
-										operation:send(client.active_conn)
+										operation:send(client.active_conn, client.last_synced_revision)
 										client.sent_changes = operation
 										print("sent operation")
 									else
@@ -162,8 +162,8 @@ local function StartClientCommand(host, port)
 									client.ignore_ticks[changedtick] = nil
 									return
 								end
-								print(start_row .. "," .. start_column .. "," .. old_end_row .. "," .. old_end_column)
-								print(new_end_row .. "," .. new_end_column)
+								-- print(start_row .. "," .. start_column .. "," .. old_end_row .. "," .. old_end_column)
+								-- print(new_end_row .. "," .. new_end_column)
 								local newbytes = vim.api.nvim_buf_get_text(
 									0,
 									start_row,
@@ -190,7 +190,7 @@ local function StartClientCommand(host, port)
 									newbytes
 								)
 								if client.sent_changes == nil then
-									operation:send(client.active_conn)
+									operation:send(client.active_conn, client.last_synced_revision)
 									client.sent_changes = operation
 									print("sent operation")
 								else
@@ -203,6 +203,7 @@ local function StartClientCommand(host, port)
 						--validate they are the same,
 						print("ack Recieved")
 						client.last_synced_revision = decoded[2]
+						client.processed_changes[client.last_synced_revision] = client.sent_changes
 						client.sent_changes = nil
 						if client.pending_changes:isEmpty() == false then
 							local operation = client.pending_changes:dequeue()
@@ -212,6 +213,15 @@ local function StartClientCommand(host, port)
 						end
 					elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 						local operation = ot.newOperationFromMessage(decoded[2])
+						local change_revision = decoded[3]
+						print("recieved: " .. operation.start_row .. "," .. operation.start_column .. "," .. operation.end_row .. "," .. operation.end_column)
+						print(operation.new_end_row .. "," .. operation.new_end_column)
+						-- iterate through processed_changes
+						for i = change_revision, client.last_synced_revision, 1 do
+							if client.processed_changes[i] ~= nil then
+								operation = ot.realignOperations(client.processed_changes[i], operation)
+							end
+						end
 						if client.sent_changes ~= nil then
 							operation = ot.realignOperations(client.sent_changes, operation)
 							if client.pending_changes:isEmpty() ~= true then
@@ -220,8 +230,18 @@ local function StartClientCommand(host, port)
 								end
 							end
 						end
-						operation:execute(client.ignore_ticks)
-						print("char added")
+						if pcall(function (...)
+							operation:execute(client.ignore_ticks)
+						end) then
+							print("char added")
+						else
+								for k,v in pairs(operation) do
+									print(k .. ": " .. vim.inspect(v))
+								end
+							error("failed to add char")
+						end
+						
+						
 					else
 						error("Unknown message " .. vim.inspect(decoded))
 					end

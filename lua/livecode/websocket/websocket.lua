@@ -34,6 +34,7 @@ local function newWebsocket(host, port, server)
 		----------------- client ot
 		last_synced_revision = 0,
 		sent_changes = nil,
+		processed_changes = {},
 		----------------- shared variables
 		active_conn = active_conn,
 		callbacks = nil,
