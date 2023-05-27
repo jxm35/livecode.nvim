@@ -321,12 +321,16 @@ local function realignOperations(local_operation, incoming_operation)
 		"Error: invalid operation"
 	)
 	print("----------------------checking-char:" .. incoming_operation.character[1])
+	print("before")
+	for k,v in pairs(incoming_operation) do
+		print(k .. ": " .. vim.inspect(v))
+	end
 
 	-- handle changes that affect which line we have changed
 	local line_diff = local_operation.new_end_row-local_operation.end_row
 	if incoming_operation.start_row > local_operation.start_row then
 		incoming_operation.start_row = incoming_operation.start_row + line_diff
-		incoming_operation.end_row = incoming_operation.end_row + line_diff
+		-- incoming_operation.end_row = incoming_operation.end_row + line_diff
 	end
 
 	-- check if any changes are on the same row in each document
@@ -360,6 +364,11 @@ local function realignOperations(local_operation, incoming_operation)
 				incoming_operation =   transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		end
+	end
+
+	print("after")
+	for k,v in pairs(incoming_operation) do
+		print(k .. ": " .. vim.inspect(v))
 	end
 
 	return incoming_operation

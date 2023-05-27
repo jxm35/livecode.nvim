@@ -208,7 +208,7 @@ local function StartClientCommand(host, port)
 						client.sent_changes = nil
 						if client.pending_changes:isEmpty() == false then
 							local operation = client.pending_changes:dequeue()
-							operation:send(client.active_conn)
+							operation:send(client.active_conn, client.last_synced_revision)
 							client.sent_changes = operation
 							print("new operation sent")
 						end
