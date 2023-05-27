@@ -204,6 +204,7 @@ local function StartClientCommand(host, port)
 						--validate they are the same,
 						print("ack Recieved")
 						client.last_synced_revision = decoded[2]
+						print("setting processed: " .. client.sent_changes.character[1], ", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision)
 						client.processed_changes[client.last_synced_revision] = client.sent_changes
 						client.sent_changes = nil
 						if client.pending_changes:isEmpty() == false then
@@ -215,9 +216,13 @@ local function StartClientCommand(host, port)
 					elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 						local operation = ot.newOperationFromMessage(decoded[2])
 						local change_revision = decoded[3]
+						client.last_synced_revision = decoded[4]
 						print("recieved: " .. operation.start_row .. "," .. operation.start_column .. "," .. operation.end_row .. "," .. operation.end_column)
 						print(operation.new_end_row .. "," .. operation.new_end_column)
 						-- iterate through processed_changes
+						if operation.operationType == ot.OPERATION_TYPE.DELETE then
+							print("received revision: '" .. change_revision .. "'")
+						end
 						for i = change_revision+1, client.last_synced_revision, 1 do
 							if client.processed_changes[i] ~= nil then
 								operation = ot.realignOperations(client.processed_changes[i], operation)

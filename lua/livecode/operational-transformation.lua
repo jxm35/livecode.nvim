@@ -321,6 +321,7 @@ local function realignOperations(local_operation, incoming_operation)
 		"Error: invalid operation"
 	)
 	print("----------------------checking-char:" .. incoming_operation.character[1])
+	print("against: " .. local_operation.character[1], ", " .. local_operation.start_row)
 	print("before")
 	for k,v in pairs(incoming_operation) do
 		print(k .. ": " .. vim.inspect(v))
@@ -329,6 +330,7 @@ local function realignOperations(local_operation, incoming_operation)
 	-- handle changes that affect which line we have changed
 	local line_diff = local_operation.new_end_row-local_operation.end_row
 	if incoming_operation.start_row > local_operation.start_row then
+		print("line diff: " .. line_diff)
 		incoming_operation.start_row = incoming_operation.start_row + line_diff
 		-- incoming_operation.end_row = incoming_operation.end_row + line_diff
 	end

@@ -75,9 +75,11 @@ local function StartServerCommand(host, port)
 							elseif decoded[1] == util.MESSAGE_TYPE.INFO then
 								forward_to_other_users(wsdata)
 							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
-								server.pending_changes:push(decoded[2])
-								forward_to_other_users(wsdata)
 								server.revision_number = server.revision_number + 1
+								server.pending_changes:push(decoded[2])
+								decoded[4] = server.revision_number
+								local msg = vim.json.encode(decoded)
+								forward_to_other_users(msg)
 								local response_msg = {
 									util.MESSAGE_TYPE.ACK,
 									server.revision_number,
