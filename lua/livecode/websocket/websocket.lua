@@ -16,6 +16,9 @@ type = function(obj)
 end
 
 local function newWebsocket(host, port, server)
+	assert(type(host) == "string", type(host) .. "is not a string")
+	assert(type(port) == "number", type(port) .. "is not a number")
+	assert(type(server) == "boolean", type(server) .. "is not a bool")
 	local ws_server = nil
 	local active_conn = nil
 	if server == true then
@@ -24,7 +27,7 @@ local function newWebsocket(host, port, server)
 	else
 		active_conn = _conn.newConnection(1, vim.loop.new_tcp())
 	end
-	
+
 	local websocket = {
 		pending_changes = util.newQueue(),
 		document_state = nil,
@@ -59,26 +62,28 @@ end
 
 -- getdata reads a given length of data from the websockets chunkbuffer
 function websocket_metatable:getdata(amount)
+	assert(type(amount) == "number", type(amount) .. "is not a number")
+
 	while string.len(self.chunk_buffer) < amount do
 		coroutine.yield()
 	end
+
 	local retrieved = string.sub(self.chunk_buffer, 1, amount)
 	self.chunk_buffer = string.sub(self.chunk_buffer, amount + 1)
 	return retrieved
 end
 
 function websocket_metatable:set_callbacks(callbacks)
+	assert(type(callbacks) == "table", type(callbacks) .. "is not a table")
 	self.callbacks = callbacks
 end
 function websocket_metatable:set_conn_callbacks(callbacks)
 	self.active_conn.callbacks = callbacks
 end
 
-
 local read_helper = function(ws)
-	if type(ws) ~= "websocket" then
-		error(type(ws) .. "is not a websocket")
-	end
+	assert(type(ws) == "websocket", type(ws) .. "is not a websocket")
+
 	while true do
 		local wsdata = ""
 		local fin
@@ -277,6 +282,5 @@ function websocket_metatable:connect()
 end
 
 return {
-	newWebsocket = newWebsocket
+	newWebsocket = newWebsocket,
 }
-

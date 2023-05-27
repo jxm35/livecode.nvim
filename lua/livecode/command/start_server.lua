@@ -2,12 +2,12 @@ local websocket_util = require("livecode.websocket.websocket")
 local util = require("livecode.util")
 
 local function StartServerCommand(host, port)
-    local host = host or "0.0.0.0"
+	local host = host or "0.0.0.0"
 	local port = port or 11359
 
-    local server = websocket_util.newWebsocket(host, port, true)
-    local callbacks = {
-        on_connect = function(conn)
+	local server = websocket_util.newWebsocket(host, port, true)
+	local callbacks = {
+		on_connect = function(conn)
 			server.connection_count = server.connection_count + 1
 
 			local function forward_to_other_users(msg)
@@ -28,8 +28,8 @@ local function StartServerCommand(host, port)
 					end
 				end
 			end
-            local conn_callbacks = {
-                on_text = function(wsdata)
+			local conn_callbacks = {
+				on_text = function(wsdata)
 					vim.schedule(function()
 						local decoded = vim.json.decode(wsdata)
 						if decoded then
@@ -71,12 +71,10 @@ local function StartServerCommand(host, port)
 										end
 									end
 								end
-								
 							elseif decoded[1] == util.MESSAGE_TYPE.INFO then
 								forward_to_other_users(wsdata)
 							elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
 								server.revision_number = server.revision_number + 1
-								server.pending_changes:push(decoded[2])
 								decoded[4] = server.revision_number
 								local msg = vim.json.encode(decoded)
 								forward_to_other_users(msg)
@@ -109,19 +107,19 @@ local function StartServerCommand(host, port)
 						forward_to_other_users(encoded)
 					end)
 				end,
-            }
+			}
 
-            conn:set_callbacks(conn_callbacks)
+			conn:set_callbacks(conn_callbacks)
 		end,
-    }
-    server:set_callbacks(callbacks)
-    server:listen()
-    print("server listening...")
-    print("local - " .. "127.0.0.1" .. ":" .. port)
+	}
+	server:set_callbacks(callbacks)
+	server:listen()
+	print("server listening...")
+	print("local - " .. "127.0.0.1" .. ":" .. port)
 	print("remote - " .. util.getPublicIp() .. ":" .. port)
 	Server = server
 end
 
 return {
-    StartServerCommand = StartServerCommand
+	StartServerCommand = StartServerCommand,
 }

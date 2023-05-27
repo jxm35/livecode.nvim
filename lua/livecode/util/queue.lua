@@ -1,4 +1,5 @@
---local queue = {}
+-- queue.lua is the definition of a queue datastructure, using lua tables
+
 local queue_metatable = {}
 queue_metatable.__index = queue_metatable
 
@@ -54,7 +55,7 @@ function queue_metatable:viewAll()
 	local valuesTable = {}
 	while current < self.last do
 		table.insert(valuesTable, self[current])
-		current = current+1
+		current = current + 1
 	end
 	return valuesTable
 end

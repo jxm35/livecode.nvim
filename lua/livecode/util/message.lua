@@ -1,5 +1,4 @@
--- File containing shared utility functions
---
+-- File constants and functions for dealing with messages
 
 local MESSAGE_TYPE = {
 

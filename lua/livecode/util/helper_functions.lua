@@ -1,6 +1,8 @@
 local bit = require("bit")
 
 local function maskText(str, mask)
+	assert(type(str) == "string", type(str) .. "is not a string")
+	assert(type(mask) == "table", type(mask) .. "is not a table")
 	local masked = {}
 	for i = 0, #str - 1 do
 		local j = bit.band(i, 0x3)
@@ -10,18 +12,20 @@ local function maskText(str, mask)
 	return masked
 end
 
-local function nocase(s)
-	s = string.gsub(s, "%a", function(c)
+local function nocase(str)
+	assert(type(str) == "string", type(str) .. "is not a string")
+	str = string.gsub(str, "%a", function(c)
 		if string.match(c, "[a-zA-Z]") then
 			return string.format("[%s%s]", string.lower(c), string.upper(c))
 		else
 			return c
 		end
 	end)
-	return s
+	return str
 end
 
 local function convert_bytes_to_string(tab)
+	assert(type(tab) == "table", type(tab) .. "is not a table")
 	local s = ""
 	for _, el in ipairs(tab) do
 		s = s .. string.char(el)
@@ -30,6 +34,8 @@ local function convert_bytes_to_string(tab)
 end
 
 local function unmask_text(str, mask)
+	assert(type(str) == "string", type(str) .. "is not a string")
+	assert(type(mask) == "table", type(mask) .. "is not a table")
 	local unmasked = {}
 	for i = 0, #str - 1 do
 		local j = bit.band(i, 0x3)
@@ -44,11 +50,8 @@ local function getPublicIp()
 	return output
 end
 
-
 local read_helper = function(ws)
-	if type(ws) ~= "websocket" then
-		error(type(ws) .. "is not a websocket")
-	end
+	assert(type(ws) == "websocket", type(ws) .. "is not a websocket")
 	while true do
 		local wsdata = ""
 		local fin
@@ -142,12 +145,11 @@ local read_helper = function(ws)
 	end
 end
 
-
 return {
 	maskText = maskText,
 	nocase = nocase,
 	convert_bytes_to_string = convert_bytes_to_string,
 	unmask_text = unmask_text,
 	getPublicIp = getPublicIp,
-	read_helper =  read_helper
+	read_helper = read_helper,
 }

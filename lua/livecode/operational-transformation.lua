@@ -45,7 +45,16 @@ local function newOperation(opType, start_row, start_column, end_row, end_column
 	return setmetatable(op, operation_metatable)
 end
 
-local function newOperationExtended(opType, start_row, start_column, end_row, end_column, new_end_row, new_end_column, char)
+local function newOperationExtended(
+	opType,
+	start_row,
+	start_column,
+	end_row,
+	end_column,
+	new_end_row,
+	new_end_column,
+	char
+)
 	if opType ~= OPERATION_TYPE.INSERT and opType ~= OPERATION_TYPE.DELETE then
 		error("invalid operation type")
 	end
@@ -134,27 +143,13 @@ function operation_metatable:execute(ignore_table)
 		local action_row = current_row
 		local next_tick = vim.api.nvim_buf_get_changedtick(0)
 		ignore_table[next_tick] = true
-		vim.api.nvim_buf_set_text(
-			0,
-			self.start_row,
-			self.start_column,
-			current_row,
-			self.start_column,
-			self.character
-		)
+		vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, current_row, self.start_column, self.character)
 		-- fix glitches when pressing the enter key
 		if #self.character == 2 and self.character[1] == "" then
 			local col = math.min(#self.character[2], self.start_column)
 			next_tick = vim.api.nvim_buf_get_changedtick(0)
 			ignore_table[next_tick] = true
-			vim.api.nvim_buf_set_text(
-				0,
-				self.start_row+1,
-				0,
-				self.start_row+1,
-				col,
-				{}
-			)
+			vim.api.nvim_buf_set_text(0, self.start_row + 1, 0, self.start_row + 1, col, {})
 		end
 	else
 		print("DELETE")
@@ -181,23 +176,20 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	assert(
-		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
-		"Error: invalid row number types"
-	)
+	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	print("-----------------change-char:" .. incoming_operation.character[1])
 	if
-		(local_operation.start_column <= incoming_operation.start_column)
---		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
+		local_operation.start_column <= incoming_operation.start_column
+		--		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
 	then
 		local new_start_col = incoming_operation.start_column
 		local new_end_col = incoming_operation.end_column
-		
+
 		if incoming_row_num == 1 then -- we shouldn't change the start col if the text is inserted on another row
 			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
 		end
 		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num]
+			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
 		return newOperation(
@@ -218,10 +210,7 @@ local function transformInsertDelete(local_operation, incoming_operation, local_
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	assert(
-		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
-		"Error: invalid row number types"
-	)
+	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column <= incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
 		local new_end_col = incoming_operation.end_column
@@ -230,7 +219,7 @@ local function transformInsertDelete(local_operation, incoming_operation, local_
 			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
 		end
 		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num]
+			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
 		return newOperation(
@@ -251,19 +240,16 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	assert(
-		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
-		"Error: invalid row number types"
-	)
+	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column < incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
 		local new_end_col = incoming_operation.end_column
-		
+
 		if incoming_row_num == 1 then
 			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
 		end
 		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num]
+			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
 		return newOperation(
@@ -284,19 +270,16 @@ local function transformDeleteDelete(local_operation, incoming_operation, local_
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	assert(
-		(type(local_row_num) == "number" and type(incoming_row_num) == "number"),
-		"Error: invalid row number types"
-	)
+	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column < incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
 		local new_end_col = incoming_operation.end_column
-		
+
 		if incoming_row_num == 1 then
 			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
 		end
 		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num]
+			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
 		return newOperation(
@@ -323,12 +306,12 @@ local function realignOperations(local_operation, incoming_operation)
 	print("----------------------checking-char:" .. incoming_operation.character[1])
 	print("against: " .. local_operation.character[1], ", " .. local_operation.start_row)
 	print("before")
-	for k,v in pairs(incoming_operation) do
+	for k, v in pairs(incoming_operation) do
 		print(k .. ": " .. vim.inspect(v))
 	end
 
 	-- handle changes that affect which line we have changed
-	local line_diff = local_operation.new_end_row-local_operation.end_row
+	local line_diff = local_operation.new_end_row - local_operation.end_row
 	if incoming_operation.start_row > local_operation.start_row then
 		print("line diff: " .. line_diff)
 		incoming_operation.start_row = incoming_operation.start_row + line_diff
@@ -340,8 +323,8 @@ local function realignOperations(local_operation, incoming_operation)
 	local incoming_rows_in_common = {}
 	local local_row_num = 1
 	local incoming_row_num = 1
-	for i = local_operation.start_row, local_operation.start_row+local_operation.new_end_row, 1 do
-		for j = incoming_operation.start_row, incoming_operation.start_row+incoming_operation.new_end_row do
+	for i = local_operation.start_row, local_operation.start_row + local_operation.new_end_row, 1 do
+		for j = incoming_operation.start_row, incoming_operation.start_row + incoming_operation.new_end_row do
 			if i == j then
 				table.insert(local_rows_in_common, local_row_num)
 				table.insert(incoming_rows_in_common, incoming_row_num)
@@ -352,24 +335,28 @@ local function realignOperations(local_operation, incoming_operation)
 	end
 
 	-- handle changes on the same line
-	for index,row_num in ipairs(local_rows_in_common) do
+	for index, row_num in ipairs(local_rows_in_common) do
 		if local_operation.operationType == OPERATION_TYPE.INSERT then
 			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-				incoming_operation =  transformInsertInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =
+					transformInsertInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			else
-				incoming_operation =   transformInsertDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =
+					transformInsertDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		else
 			if incoming_operation.operationType == OPERATION_TYPE.INSERT then
-				incoming_operation =   transformDeleteInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =
+					transformDeleteInsert(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			else
-				incoming_operation =   transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
+				incoming_operation =
+					transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		end
 	end
 
 	print("after")
-	for k,v in pairs(incoming_operation) do
+	for k, v in pairs(incoming_operation) do
 		print(k .. ": " .. vim.inspect(v))
 	end
 

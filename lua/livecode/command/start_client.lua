@@ -3,11 +3,11 @@ local util = require("livecode.util")
 local ot = require("livecode.operational-transformation")
 
 local function StartClientCommand(host, port)
-    local host = host or "127.0.0.1"
+	local host = host or "127.0.0.1"
 	local port = port or 11359
 	local username = "james"
-    local client = websocket_util.newWebsocket(host, port, false)
-    local callbacks = {
+	local client = websocket_util.newWebsocket(host, port, false)
+	local callbacks = {
 		on_connect = function()
 			local obj = {
 				util.MESSAGE_TYPE.CONNECT,
@@ -204,7 +204,10 @@ local function StartClientCommand(host, port)
 						--validate they are the same,
 						print("ack Recieved")
 						client.last_synced_revision = decoded[2]
-						print("setting processed: " .. client.sent_changes.character[1], ", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision)
+						print(
+							"setting processed: " .. client.sent_changes.character[1],
+							", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision
+						)
 						client.processed_changes[client.last_synced_revision] = client.sent_changes
 						client.sent_changes = nil
 						if client.pending_changes:isEmpty() == false then
@@ -217,13 +220,22 @@ local function StartClientCommand(host, port)
 						local operation = ot.newOperationFromMessage(decoded[2])
 						local change_revision = decoded[3]
 						client.last_synced_revision = decoded[4]
-						print("recieved: " .. operation.start_row .. "," .. operation.start_column .. "," .. operation.end_row .. "," .. operation.end_column)
+						print(
+							"recieved: "
+								.. operation.start_row
+								.. ","
+								.. operation.start_column
+								.. ","
+								.. operation.end_row
+								.. ","
+								.. operation.end_column
+						)
 						print(operation.new_end_row .. "," .. operation.new_end_column)
 						-- iterate through processed_changes
 						if operation.operationType == ot.OPERATION_TYPE.DELETE then
 							print("received revision: '" .. change_revision .. "'")
 						end
-						for i = change_revision+1, client.last_synced_revision, 1 do
+						for i = change_revision + 1, client.last_synced_revision, 1 do
 							if client.processed_changes[i] ~= nil then
 								operation = ot.realignOperations(client.processed_changes[i], operation)
 							end
@@ -236,18 +248,16 @@ local function StartClientCommand(host, port)
 								end
 							end
 						end
-						if pcall(function (...)
+						if pcall(function(...)
 							operation:execute(client.ignore_ticks)
 						end) then
 							print("char added")
 						else
-								for k,v in pairs(operation) do
-									print(k .. ": " .. vim.inspect(v))
-								end
+							for k, v in pairs(operation) do
+								print(k .. ": " .. vim.inspect(v))
+							end
 							error("failed to add char")
 						end
-						
-						
 					else
 						error("Unknown message " .. vim.inspect(decoded))
 					end
@@ -260,11 +270,11 @@ local function StartClientCommand(host, port)
 			end)
 		end,
 	}
-    client:set_conn_callbacks(callbacks)
-    client:connect()
+	client:set_conn_callbacks(callbacks)
+	client:connect()
 	Client = client
 end
 
 return {
-    StartClientCommand = StartClientCommand
+	StartClientCommand = StartClientCommand,
 }
