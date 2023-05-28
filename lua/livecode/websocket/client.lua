@@ -1,6 +1,10 @@
+-- client.lua contains handler and utility functions, sepcifically made for a livecode client.
+
 local util = require("livecode.util.message")
 local ot = require("livecode.operational-transformation")
 
+-- client_attach_to_buffer sets up the client to attach to the current buffer, 
+-- and send the relevent messages when changes are made to this buffer.
 local function client_attach_to_buffer(client)
     local success = vim.api.nvim_buf_attach(0, false, {
 		on_bytes = function(
@@ -80,30 +84,28 @@ local function client_on_connect(client)
 	print("Attempting to connect...")
 end
 
-local function client_on_message_receive(client, wsdata)
-    vim.schedule(function()
-		local decoded = vim.json.decode(wsdata)
-		if decoded then
-			if decoded[1] == util.MESSAGE_TYPE.INFO then
-				print("Recieved: " .. decoded[2])
+local function handle_info_message(client, decoded)
+	print("Recieved: " .. decoded[2])
+end
 
-			elseif decoded[1] == util.MESSAGE_TYPE.WELCOME then
-				if decoded[2] == true then
-					print("I'm first")
-					local success = client_attach_to_buffer(client)
-					if success == false then
-						error("could not connect to buffer")
-					end
-				else
-					local req = {
-						util.MESSAGE_TYPE.GET_BUFFER,
-					}
-					local encoded = vim.json.encode(req)
-					client.active_conn:send_message(encoded)
-				end
+local function handle_welcome_message(client, decoded)
+	if decoded[2] == true then
+		print("I'm first")
+		local success = client_attach_to_buffer(client)
+		if success == false then
+			error("could not connect to buffer")
+		end
+	else
+		local req = {
+			util.MESSAGE_TYPE.GET_BUFFER,
+		}
+		local encoded = vim.json.encode(req)
+		client.active_conn:send_message(encoded)
+	end
+end
 
-			elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
-				print("buffer requested.")
+local function handle_get_buffer_message(client, decoded)
+	print("buffer requested.")
 				local fullname = vim.api.nvim_buf_get_name(0)
 				local cwdname = vim.api.nvim_call_function("fnamemodify", { fullname, ":." }) -- filepath relative to current working directory
 				local bufname = cwdname
@@ -123,9 +125,10 @@ local function client_on_message_receive(client, wsdata)
 				}
 				local encoded = vim.json.encode(obj)
 				client.active_conn:send_message(encoded)
+end
 
-			elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
-				print("loading new buffer")
+local function handle_buffer_content_message(client, decoded)
+	print("loading new buffer")
 				local _, _, bufname, pidslist, content, lsr = unpack(decoded)
 				client.last_synced_revision = lsr
 				local buf = vim.api.nvim_create_buf(true, false)
@@ -140,26 +143,28 @@ local function client_on_message_receive(client, wsdata)
 				if success == false then
 					error("could not connect to buffer")
 				end
-				
-			elseif decoded[1] == util.MESSAGE_TYPE.ACK then
-				--validate they are the same,
-				print("ack Recieved")
-				client.last_synced_revision = decoded[2]
-				print(
-					"setting processed: " .. client.sent_changes.character[1],
-					", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision
-				)
-				client.processed_changes[client.last_synced_revision] = client.sent_changes
-				client.sent_changes = nil
-				if client.pending_changes:isEmpty() == false then
-					local operation = client.pending_changes:dequeue()
-					operation:send(client.active_conn, client.last_synced_revision)
-					client.sent_changes = operation
-					print("new operation sent")
-				end
+end
 
-			elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
-				local operation = ot.newOperationFromMessage(decoded[2])
+local function handle_ack_message(client, decoded)
+	--validate they are the same,
+	print("ack Recieved")
+	client.last_synced_revision = decoded[2]
+	print(
+		"setting processed: " .. client.sent_changes.character[1],
+		", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision
+	)
+	client.processed_changes[client.last_synced_revision] = client.sent_changes
+	client.sent_changes = nil
+	if client.pending_changes:isEmpty() == false then
+		local operation = client.pending_changes:dequeue()
+		operation:send(client.active_conn, client.last_synced_revision)
+		client.sent_changes = operation
+		print("new operation sent")
+	end
+end
+
+local function handle_edit_message(client, decoded)
+	local operation = ot.newOperationFromMessage(decoded[2])
 				local change_revision = decoded[3]
 				client.last_synced_revision = decoded[4]
 				print(
@@ -200,12 +205,34 @@ local function client_on_message_receive(client, wsdata)
 					end
 					error("failed to add char")
 				end
+end
 
+-- msg handler provides a mapping between different message types and their repective handler functions.
+local msg_handler =
+{
+  [util.MESSAGE_TYPE.INFO] = handle_info_message,
+  [util.MESSAGE_TYPE.WELCOME] = handle_welcome_message,
+  [util.MESSAGE_TYPE.GET_BUFFER] = handle_get_buffer_message,
+  [util.MESSAGE_TYPE.BUFFER_CONTENT] = handle_buffer_content_message,
+  [util.MESSAGE_TYPE.ACK] = handle_ack_message,
+  [util.MESSAGE_TYPE.EDIT] = handle_edit_message,
+}
+
+-- client_on_message_receive is called when the client receives a new message. 
+-- It passes handling of the message to the respective functions.
+local function client_on_message_receive(client, wsdata)
+	vim.schedule(function ()
+		local decoded = vim.json.decode(wsdata)
+		if decoded then
+			local handle_func = msg_handler[decoded[1]]
+			if handle_func then
+				handle_func(client, decoded)
 			else
 				error("Unknown message " .. vim.inspect(decoded))
 			end
 		end
 	end)
+	
 end
 
 local function default_client_callbacks(client)
