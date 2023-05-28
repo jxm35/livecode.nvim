@@ -1,8 +1,8 @@
 
 
     local util = require("livecode.util")
-    
-    local function server_on_message_receive(server, conn, wsdata)
+
+    local function server_on_message_receive(server, conn, wsdata, forward_to_other_users, forward_to_one_user)
         vim.schedule(function()
             local decoded = vim.json.decode(wsdata)
             if decoded then
@@ -12,7 +12,7 @@
                         decoded[2] .. " has joined.",
                     }
                     local encoded = vim.json.encode(forward_msg)
-                    server.forward_to_other_users(encoded)
+                    forward_to_other_users(encoded)
     
                     local isFirst = true
                     if #server.connections > 1 then
@@ -28,13 +28,13 @@
                 elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
                     decoded[2] = conn.id
                     local encoded = vim.json.encode(decoded)
-                    server.forward_to_one_user(encoded)
+                    forward_to_one_user(encoded)
                 elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
                     print("forwarding buffer content")
                     decoded[6] = server.revision_number
                     local msg = vim.json.encode(decoded)
                     if decoded[2] == -1 then
-                        server.forward_to_other_users(msg)
+                        forward_to_other_users(msg)
                     else
                         -- forward to the user in decoded[2]
                         for _, client in pairs(server.connections) do
@@ -45,12 +45,12 @@
                         end
                     end
                 elseif decoded[1] == util.MESSAGE_TYPE.INFO then
-                    server.forward_to_other_users(wsdata)
+                    forward_to_other_users(wsdata)
                 elseif decoded[1] == util.MESSAGE_TYPE.EDIT then
                     server.revision_number = server.revision_number + 1
                     decoded[4] = server.revision_number
                     local msg = vim.json.encode(decoded)
-                    server.forward_to_other_users(msg)
+                    forward_to_other_users(msg)
                     local response_msg = {
                         util.MESSAGE_TYPE.ACK,
                         server.revision_number,
@@ -65,7 +65,7 @@
         end)
     end
 
-    local function server_on_disconnect (server, conn)
+    local function server_on_disconnect (server, conn, forward_to_other_users, forward_to_one_user)
         vim.schedule(function()
             server.connection_count = math.max(server.connection_count - 1, 0)
             print("Disconnected. " .. server.connection_count .. " client(s) remaining.")
@@ -78,18 +78,18 @@
                 conn.id .. "has disconnected",
             }
             local encoded = vim.json.encode(disconnect)
-            server.forward_to_other_users(encoded)
+            forward_to_other_users(encoded)
         end)
     end
 
-    local function default_conn_callbacks (server, conn)
+    local function default_conn_callbacks (server, conn, forward_to_other_users, forward_to_one_user)
         return {
             on_text = function(wsdata)
-                server_on_message_receive(server, conn, wsdata)
+                server_on_message_receive(server, conn, wsdata, forward_to_other_users, forward_to_one_user)
             end,
 
             on_disconnect = function()
-                server_on_disconnect(server, conn)
+                server_on_disconnect(server, conn, forward_to_other_users, forward_to_one_user)
             end,
         }
     end
@@ -124,4 +124,5 @@
 
     return {
         default_server_callbacks = default_server_callbacks,
+        default_conn_callbacks = default_conn_callbacks
     }
