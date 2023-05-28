@@ -19,20 +19,15 @@ type = function(obj)
 end
 
 local function newOperation(opType, start_row, start_column, end_row, end_column, char)
-	if opType ~= OPERATION_TYPE.INSERT and opType ~= OPERATION_TYPE.DELETE then
-		error("invalid operation type")
-	end
-	if type(start_row) ~= "number" then
-		error("invalid start_row")
-	elseif type(start_column) ~= "number" then
-		error("invalid start_column")
-	elseif type(end_row) ~= "number" then
-		error("invalid end_row")
-	elseif type(end_column) ~= "number" then
-		error("invalid end_column")
-	elseif type(char) ~= "table" or type(char[1]) ~= "string" then
-		error("invalid character")
-	end
+	assert(
+		(opType == OPERATION_TYPE.INSERT or opType == OPERATION_TYPE.DELETE),
+		"invalid operation type"
+	)
+	assert(type(start_row) == "number")
+	assert(type(start_column) == "number")
+	assert(type(end_row) == "number")
+	assert(type(end_column) == "number")
+	assert(type(char) == "table")
 
 	local op = {
 		operationType = opType,
@@ -55,24 +50,17 @@ local function newOperationExtended(
 	new_end_column,
 	char
 )
-	if opType ~= OPERATION_TYPE.INSERT and opType ~= OPERATION_TYPE.DELETE then
-		error("invalid operation type")
-	end
-	if type(start_row) ~= "number" then
-		error("invalid start_row")
-	elseif type(start_column) ~= "number" then
-		error("invalid start_column")
-	elseif type(end_row) ~= "number" then
-		error("invalid end_row")
-	elseif type(end_column) ~= "number" then
-		error("invalid end_column")
-	elseif type(new_end_row) ~= "number" then
-		error("invalid end_row")
-	elseif type(new_end_column) ~= "number" then
-		error("invalid end_column")
-	elseif type(char) ~= "table" or type(char[1]) ~= "string" then
-		error("invalid character")
-	end
+	assert(
+		(opType == OPERATION_TYPE.INSERT or opType == OPERATION_TYPE.DELETE),
+		"invalid operation type"
+	)
+	assert(type(start_row) == "number")
+	assert(type(start_column) == "number")
+	assert(type(end_row) == "number")
+	assert(type(end_column) == "number")
+	assert(type(new_end_row) == "number")
+	assert(type(new_end_column) == "number")
+	assert(type(char) == "table")
 
 	local op = {
 		operationType = opType,
@@ -88,24 +76,17 @@ local function newOperationExtended(
 end
 
 local function newOperationFromMessage(msg)
-	if msg.operationType ~= OPERATION_TYPE.INSERT and msg.operationType ~= OPERATION_TYPE.DELETE then
-		error("invalid operation type")
-	end
-	if type(msg.start_row) ~= "number" then
-		error("invalid start_row")
-	elseif type(msg.start_column) ~= "number" then
-		error("invalid start_column")
-	elseif type(msg.end_row) ~= "number" then
-		error("invalid end_row")
-	elseif type(msg.end_column) ~= "number" then
-		error("invalid end_column")
-	elseif type(msg.new_end_row) ~= "number" then
-		error("invalid end_row")
-	elseif type(msg.new_end_column) ~= "number" then
-		error("invalid end_column")
-	elseif type(msg.character) ~= "table" or type(msg.character[1]) ~= "string" then
-		error("invalid character")
-	end
+	assert(
+		(msg.operationType == OPERATION_TYPE.INSERT or msg.operationType == OPERATION_TYPE.DELETE),
+		"invalid operation type"
+	)
+	assert(type(msg.start_row) == "number")
+	assert(type(msg.start_column) == "number")
+	assert(type(msg.end_row) == "number")
+	assert(type(msg.end_column) == "number")
+	assert(type(msg.new_end_row) == "number")
+	assert(type(msg.new_end_column) == "number")
+	assert(type(msg.character) == "table")
 
 	local op = {
 		operationType = msg.operationType,
@@ -122,9 +103,9 @@ end
 
 function operation_metatable:send(conn, lsr)
 	--assert(type(client) == "client", "ERROR: sending from invalid socket.")
-	if type(lsr) ~= "number" then
-		error("invalid last synced row")
-	end
+	assert(type(conn) == "connection")
+	assert(type(lsr)=="number")
+	
 	local msg = {
 		util.MESSAGE_TYPE.EDIT,
 		self,
@@ -135,6 +116,7 @@ function operation_metatable:send(conn, lsr)
 end
 
 function operation_metatable:execute(ignore_table)
+	assert( type(ignore_table) == "table", "Error: invalid ignore_table provided")
 	--vim.api.nvim_buf_set_text(0, 0, 28, 0, 32, {self.character})
 	print("op" .. self.operationType .. " " .. OPERATION_TYPE.INSERT)
 	if self.operationType == OPERATION_TYPE.INSERT then
