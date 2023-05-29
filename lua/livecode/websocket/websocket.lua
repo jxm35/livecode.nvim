@@ -1,3 +1,5 @@
+-- websocket.lua contains the definition of a websocket type, and all functions on it.
+
 local bit = require("bit")
 local _conn = require("livecode.websocket.connection")
 local util = require("livecode.util")

@@ -1,5 +1,7 @@
 local websocket_util = require("livecode.websocket.websocket")
 local util = require("livecode.util")
+local server_util = require("livecode.websocket.server")
+
 
 local function StartServerCommand(host, port)
 	local host = host or "0.0.0.0"
@@ -98,7 +100,6 @@ local function StartServerCommand(host, port)
 						if server.connection_count == 0 then
 							server.initialised = false
 						end
-
 						local disconnect = {
 							util.MESSAGE_TYPE.INFO,
 							conn.id .. "has disconnected",
@@ -113,7 +114,9 @@ local function StartServerCommand(host, port)
 		end,
 	}
 	server:set_callbacks(callbacks)
+
 	server:listen()
+
 	print("server listening...")
 	print("local - " .. "127.0.0.1" .. ":" .. port)
 	print("remote - " .. util.getPublicIp() .. ":" .. port)
