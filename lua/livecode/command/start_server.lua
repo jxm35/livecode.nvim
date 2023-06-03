@@ -117,9 +117,9 @@ local function StartServerCommand(host, port)
 
 	server:listen()
 
-	print("server listening...")
-	print("local - " .. "127.0.0.1" .. ":" .. port)
-	print("remote - " .. util.getPublicIp() .. ":" .. port)
+	-- print("server listening...")
+	-- print("local - " .. "127.0.0.1" .. ":" .. port)
+	-- print("remote - " .. util.getPublicIp() .. ":" .. port)
 	Server = server
 end
 

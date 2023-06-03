@@ -174,12 +174,14 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
 			new_end_col,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tii(Ins[3, ‘a’], Ins[4, ‘b’]) = Ins[3, ‘a’]
 	else
@@ -204,12 +206,14 @@ local function transformInsertDelete(local_operation, incoming_operation, local_
 			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
 			new_end_col,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tid(Ins[3, ‘a’], Del[4]) = Ins[3, ‘a’]
 	else
@@ -234,12 +238,14 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
 			new_end_col,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		)
 	else
@@ -248,6 +254,7 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 end
 
 local function transformDeleteDelete(local_operation, incoming_operation, local_row_num, incoming_row_num)
+	print("transformDeleteDelete")
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
@@ -264,12 +271,14 @@ local function transformDeleteDelete(local_operation, incoming_operation, local_
 			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
 			new_end_col,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tdd(Del[3], Del[4]) = Del[3]
 	elseif local_operation.start_column > incoming_operation.start_column then
