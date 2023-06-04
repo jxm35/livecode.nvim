@@ -16,7 +16,13 @@ local function setup_test_client()
 	return client
 end
 
+local function getBufLines()
+	local result = vim.api.nvim_buf_get_lines(0, 0, vim.api.nvim_buf_line_count(0), false)
+	return result
+end
+
 return {
     setUpBuffer = setUpBuffer,
     setup_test_client = setup_test_client,
+    getBufLines = getBufLines
 }

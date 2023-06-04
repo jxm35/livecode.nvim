@@ -1,8 +1,4 @@
 local tu = require("tests.test_utils")
-local function getBufLines()
-	local result = vim.api.nvim_buf_get_lines(0, 0, vim.api.nvim_buf_line_count(0), false)
-	return result
-end
 
 describe("test when to apply operational transformation:", function()
 	local input = [[hello world]]
@@ -65,7 +61,7 @@ describe("test when to apply operational transformation:", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
@@ -129,7 +125,7 @@ describe("test when to apply operational transformation:", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	it("processed changes", function()
@@ -180,7 +176,7 @@ describe("test when to apply operational transformation:", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)
@@ -243,7 +239,7 @@ describe("test insert insert:", function ()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)
@@ -306,7 +302,7 @@ describe("test insert delete:", function ()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)
@@ -369,7 +365,7 @@ describe("test delete insert:", function ()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)
@@ -432,7 +428,7 @@ describe("test delete delete:", function ()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)

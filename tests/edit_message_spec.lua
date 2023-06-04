@@ -1,8 +1,4 @@
 local tu = require("tests.test_utils")
-local function getBufLines()
-	local result = vim.api.nvim_buf_get_lines(0, 0, vim.api.nvim_buf_line_count(0), false)
-	return result
-end
 
 describe("check edit messages (insert):", function()
 	local testModule = require("livecode")
@@ -50,7 +46,7 @@ describe("check edit messages (insert):", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
@@ -94,7 +90,7 @@ describe("check edit messages (insert):", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
@@ -141,7 +137,7 @@ world]]
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
@@ -186,7 +182,7 @@ world!]]
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 end)
@@ -238,7 +234,7 @@ describe("check edit messages (delete):", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
@@ -282,7 +278,7 @@ describe("check edit messages (delete):", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	it("deletes a line (dd)", function()
@@ -330,7 +326,7 @@ describe("check edit messages (delete):", function()
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	it("deletes across lines", function()
@@ -379,7 +375,7 @@ finally]]
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	it("deletes first character of line", function()
@@ -428,7 +424,7 @@ finally]]
 
         -- check results
         coroutine.yield()
-        local result = getBufLines()
+        local result = tu.getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	
