@@ -135,6 +135,7 @@ function operation_metatable:execute(ignore_table)
 		end
 	else
 		print("DELETE")
+		print(vim.inspect(self.character))
 		local action_column = self.start_column + self.end_column
 		local sr = self.start_row
 		local sc = self.start_column
@@ -165,21 +166,19 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 		--		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
 	then
 		local new_start_col = incoming_operation.start_column
-		local new_end_col = incoming_operation.end_column
 
 		if incoming_row_num == 1 then -- we shouldn't change the start col if the text is inserted on another row
 			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
 		end
-		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
-		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
-			new_end_col,
+			incoming_operation.end_column,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tii(Ins[3, ‘a’], Ins[4, ‘b’]) = Ins[3, ‘a’]
 	else
@@ -195,21 +194,19 @@ local function transformInsertDelete(local_operation, incoming_operation, local_
 	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column <= incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
-		local new_end_col = incoming_operation.end_column
 
 		if incoming_row_num == 1 then
 			new_start_col = incoming_operation.start_column + #local_operation.character[local_row_num]
 		end
-		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column + #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
-		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
-			new_end_col,
+			incoming_operation.end_column,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tid(Ins[3, ‘a’], Del[4]) = Ins[3, ‘a’]
 	else
@@ -225,21 +222,19 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column < incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
-		local new_end_col = incoming_operation.end_column
 
 		if incoming_row_num == 1 then
-			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
-		end
-		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
+			new_start_col = incoming_operation.start_column - local_operation.end_column
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.INSERT,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
-			new_end_col,
+			incoming_operation.end_column,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		)
 	else
@@ -248,6 +243,7 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 end
 
 local function transformDeleteDelete(local_operation, incoming_operation, local_row_num, incoming_row_num)
+	print("transformDeleteDelete")
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
@@ -255,21 +251,19 @@ local function transformDeleteDelete(local_operation, incoming_operation, local_
 	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
 	if local_operation.start_column < incoming_operation.start_column then
 		local new_start_col = incoming_operation.start_column
-		local new_end_col = incoming_operation.end_column
 
 		if incoming_row_num == 1 then
-			new_start_col = incoming_operation.start_column - #local_operation.character[local_row_num]
-		end
-		if incoming_row_num == #incoming_operation.character then
-			new_end_col = incoming_operation.end_column - #local_operation.character[local_row_num] -- this will need to change, end col is relative so shouldn't change
+			new_start_col = incoming_operation.start_column - local_operation.end_column
 		end
 
-		return newOperation(
+		return newOperationExtended(
 			OPERATION_TYPE.DELETE,
 			incoming_operation.start_row,
 			new_start_col,
 			incoming_operation.end_row,
-			new_end_col,
+			incoming_operation.end_column,
+			incoming_operation.new_end_row,
+			incoming_operation.new_end_column,
 			incoming_operation.character
 		) -- Tdd(Del[3], Del[4]) = Del[3]
 	elseif local_operation.start_column > incoming_operation.start_column then

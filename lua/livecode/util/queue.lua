@@ -53,7 +53,7 @@ function queue_metatable:viewAll()
 	end
 	local current = self.first
 	local valuesTable = {}
-	while current < self.last do
+	while current <= self.last do
 		table.insert(valuesTable, self[current])
 		current = current + 1
 	end

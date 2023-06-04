@@ -178,6 +178,7 @@ local function handle_edit_message(client, decoded)
 						.. operation.end_column
 				)
 				print(operation.new_end_row .. "," .. operation.new_end_column)
+				print(vim.inspect(operation.character))
 				-- iterate through processed_changes
 				if operation.operationType == ot.OPERATION_TYPE.DELETE then
 					print("received revision: '" .. change_revision .. "'")
