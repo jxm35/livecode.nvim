@@ -165,7 +165,7 @@ world!]]
 				0,
                 1,
                 0,
-				{"", "world"}
+				{"", ""}
 			)
 
         local req = {
@@ -268,6 +268,56 @@ end]]
         client.active_conn.callbacks.on_text(ifEncoded)
 		client.active_conn.callbacks.on_text(thenEncoded)
 		client.active_conn.callbacks.on_text(endEncoded)
+
+
+        -- check results
+        coroutine.yield()
+        local result = tu.getBufLines()
+        assert.are.same(vim.split(expected, "\n"), result)
+	end)
+
+	it("lsp replaces text", function()
+		local input = [[if true != false then
+	print("hello")
+end]]
+		local expected = [[if true ~= false then
+	print("hello")
+end]]
+		tu.setUpBuffer(input)
+		if client  then
+			client.active_conn.sock:close()
+		end
+		client = tu.setup_test_client()
+        -- setup
+		local co = coroutine.running()
+		vim.defer_fn(function()
+            print("coroutine resuming")
+			coroutine.resume(co)
+		end, 100)
+        
+		-- the lsp replaces the text in 1 operation
+
+        local operation = ot.newOperationExtended(
+				ot.OPERATION_TYPE.INSERT,
+				0,
+				8,
+				0,
+				2,
+                0,
+                2,
+				{"~="}
+			)
+
+        local req = {
+            util.MESSAGE_TYPE.EDIT,
+            operation,
+            2,
+            2,
+        }
+        local encoded = vim.json.encode(req)
+
+        -- do test simluations
+        client.active_conn.callbacks.on_text(encoded)
 
 
         -- check results
