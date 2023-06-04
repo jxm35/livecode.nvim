@@ -135,6 +135,7 @@ function operation_metatable:execute(ignore_table)
 		end
 	else
 		print("DELETE")
+		print(vim.inspect(self.character))
 		local action_column = self.start_column + self.end_column
 		local sr = self.start_row
 		local sc = self.start_column
