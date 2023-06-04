@@ -5,22 +5,19 @@ local function getBufLines()
 end
 
 describe("check edit messages (insert):", function()
-	local input = [[hello world]]
-	local expected = [[hello world!]]
 	local testModule = require("livecode")
     local ot = require("livecode.operational-transformation")
     local util = require("livecode.util")
 	local client = nil
 
-	before_each(function()
+	it("type letter", function()
+		local input = [[hello world]]
+		local expected = [[hello world!]]
 		tu.setUpBuffer(input)
 		if client  then
 			client.active_conn.sock:close()
 		end
 		client = tu.setup_test_client()
-	end)
-
-	it("text is entered from an edit message", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
@@ -57,35 +54,30 @@ describe("check edit messages (insert):", function()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 
-	it("message is transformed if we have sent changes", function()
+	it("paste word", function()
+		local input = [[hello !]]
+		local expected = [[hello world!]]
+		tu.setUpBuffer(input)
+		if client  then
+			client.active_conn.sock:close()
+		end
+		client = tu.setup_test_client()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
+            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
-
-		local sent_op = ot.newOperationExtended(
-			ot.OPERATION_TYPE.INSERT,
-			0,
-			0,
-			0,
-			0,
-			0,
-			1,
-			{"hello "}
-		)
-		client.sent_changes = sent_op
         
         local operation = ot.newOperationExtended(
 				ot.OPERATION_TYPE.INSERT,
 				0,
-				5,
+				6,
 				0,
 				0,
                 0,
-                1,
-				{"!"}
+                5,
+				{"world"}
 			)
 
         local req = {
@@ -105,50 +97,34 @@ describe("check edit messages (insert):", function()
         local result = getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
-	it("message is transformed if we have pending changes", function()
+
+	it("newline (o)", function()
+		local input = [[hello
+world]]
+		local expected = [[hello
+
+world]]
+		tu.setUpBuffer(input)
+		if client  then
+			client.active_conn.sock:close()
+		end
+		client = tu.setup_test_client()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming2")
+            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
-
-		local sent_op = ot.newOperationExtended(
-			ot.OPERATION_TYPE.INSERT,
-			0,
-			0,
-			0,
-			0,
-			0,
-			1,
-			{""}
-		)
-		client.sent_changes = sent_op
-
-
-		local pending_op = ot.newOperationExtended(
-			ot.OPERATION_TYPE.INSERT,
-			0,
-			0,
-			0,
-			0,
-			0,
-			1,
-			{"hello "}
-		)
-		client.pending_changes:push(pending_op)
-
-
         
         local operation = ot.newOperationExtended(
 				ot.OPERATION_TYPE.INSERT,
+				1,
 				0,
-				5,
 				0,
 				0,
-                0,
                 1,
-				{"!"}
+                0,
+				{"", ""}
 			)
 
         local req = {
@@ -168,28 +144,22 @@ describe("check edit messages (insert):", function()
         local result = getBufLines()
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
-	it("message is transformed if we have processed changes", function()
+
+	it("enter key (middle of line)", function()
+		local input = [[helloworld!]]
+		local expected = [[hello
+world!]]
+		tu.setUpBuffer(input)
+		if client  then
+			client.active_conn.sock:close()
+		end
+		client = tu.setup_test_client()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming2")
+            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
-
-
-		local processed_op = ot.newOperationExtended(
-			ot.OPERATION_TYPE.INSERT,
-			0,
-			0,
-			0,
-			0,
-			0,
-			1,
-			{"hello "}
-		)
-		client.processed_changes[2] = processed_op
-
-
         
         local operation = ot.newOperationExtended(
 				ot.OPERATION_TYPE.INSERT,
@@ -197,16 +167,16 @@ describe("check edit messages (insert):", function()
 				5,
 				0,
 				0,
-                0,
                 1,
-				{"!"}
+                0,
+				{"", "world"}
 			)
 
         local req = {
             util.MESSAGE_TYPE.EDIT,
             operation,
-            1,
-            3,
+            2,
+            2,
         }
         local encoded = vim.json.encode(req)
 
@@ -462,4 +432,185 @@ finally]]
         assert.are.same(vim.split(expected, "\n"), result)
 	end)
 	
+end)
+
+describe("test when to apply operational transformation:", function()
+	local input = [[hello world]]
+	local expected = [[hello world!]]
+	local testModule = require("livecode")
+    local ot = require("livecode.operational-transformation")
+    local util = require("livecode.util")
+	local client = nil
+
+	before_each(function()
+		tu.setUpBuffer(input)
+		if client  then
+			client.active_conn.sock:close()
+		end
+		client = tu.setup_test_client()
+	end)
+
+	it("sent changes", function()
+        -- setup
+		local co = coroutine.running()
+		vim.defer_fn(function()
+            print("coroutine resuming1")
+			coroutine.resume(co)
+		end, 100)
+
+		local sent_op = ot.newOperationExtended(
+			ot.OPERATION_TYPE.INSERT,
+			0,
+			0,
+			0,
+			0,
+			0,
+			1,
+			{"hello "}
+		)
+		client.sent_changes = sent_op
+        
+        local operation = ot.newOperationExtended(
+				ot.OPERATION_TYPE.INSERT,
+				0,
+				5,
+				0,
+				0,
+                0,
+                1,
+				{"!"}
+			)
+
+        local req = {
+            util.MESSAGE_TYPE.EDIT,
+            operation,
+            2,
+            2,
+        }
+        local encoded = vim.json.encode(req)
+
+        -- do test simluations
+        client.active_conn.callbacks.on_text(encoded)
+
+
+        -- check results
+        coroutine.yield()
+        local result = getBufLines()
+        assert.are.same(vim.split(expected, "\n"), result)
+	end)
+
+	it("pending changes", function()
+        -- setup
+		local co = coroutine.running()
+		vim.defer_fn(function()
+            print("coroutine resuming2")
+			coroutine.resume(co)
+		end, 100)
+
+		local sent_op = ot.newOperationExtended(
+			ot.OPERATION_TYPE.INSERT,
+			0,
+			0,
+			0,
+			0,
+			0,
+			1,
+			{""}
+		)
+		client.sent_changes = sent_op
+
+
+		local pending_op = ot.newOperationExtended(
+			ot.OPERATION_TYPE.INSERT,
+			0,
+			0,
+			0,
+			0,
+			0,
+			1,
+			{"hello "}
+		)
+		client.pending_changes:push(pending_op)
+
+
+        
+        local operation = ot.newOperationExtended(
+				ot.OPERATION_TYPE.INSERT,
+				0,
+				5,
+				0,
+				0,
+                0,
+                1,
+				{"!"}
+			)
+
+        local req = {
+            util.MESSAGE_TYPE.EDIT,
+            operation,
+            2,
+            2,
+        }
+        local encoded = vim.json.encode(req)
+
+        -- do test simluations
+        client.active_conn.callbacks.on_text(encoded)
+
+
+        -- check results
+        coroutine.yield()
+        local result = getBufLines()
+        assert.are.same(vim.split(expected, "\n"), result)
+	end)
+	it("processed changes", function()
+        -- setup
+		local co = coroutine.running()
+		vim.defer_fn(function()
+            print("coroutine resuming2")
+			coroutine.resume(co)
+		end, 100)
+
+
+		local processed_op = ot.newOperationExtended(
+			ot.OPERATION_TYPE.INSERT,
+			0,
+			0,
+			0,
+			0,
+			0,
+			1,
+			{"hello "}
+		)
+		client.processed_changes[2] = processed_op
+
+
+        
+        local operation = ot.newOperationExtended(
+				ot.OPERATION_TYPE.INSERT,
+				0,
+				5,
+				0,
+				0,
+                0,
+                1,
+				{"!"}
+			)
+
+        local req = {
+            util.MESSAGE_TYPE.EDIT,
+            operation,
+            1,
+            3,
+        }
+        local encoded = vim.json.encode(req)
+
+        -- do test simluations
+        client.active_conn.callbacks.on_text(encoded)
+
+
+        -- check results
+        coroutine.yield()
+        local result = getBufLines()
+        assert.are.same(vim.split(expected, "\n"), result)
+	end)
 end)
