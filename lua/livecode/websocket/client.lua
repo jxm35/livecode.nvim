@@ -45,6 +45,10 @@ local function client_attach_to_buffer(client)
 			elseif new_end_row == old_end_row and new_end_column < old_end_column then
 				operationType = ot.OPERATION_TYPE.DELETE
 			end
+			-- remove duplication when creating a newline from the middle of a previous one
+			if operationType == ot.OPERATION_TYPE.INSERT and #newbytes > 1 then
+				newbytes[#newbytes] = string.sub(newbytes[#newbytes], 1, new_end_column)
+			end
 			local operation = ot.newOperationExtended(
 				operationType,
 				start_row,

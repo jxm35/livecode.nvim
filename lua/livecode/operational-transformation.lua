@@ -125,14 +125,14 @@ function operation_metatable:execute(ignore_table)
 		local action_row = current_row
 		local next_tick = vim.api.nvim_buf_get_changedtick(0)
 		ignore_table[next_tick] = true
-		vim.api.nvim_buf_set_text(0, self.start_row, self.start_column, current_row, self.start_column, self.character)
-		-- fix glitches when pressing the enter key
-		if #self.character == 2 and self.character[1] == "" then
-			local col = math.min(#self.character[2], self.start_column)
-			next_tick = vim.api.nvim_buf_get_changedtick(0)
-			ignore_table[next_tick] = true
-			vim.api.nvim_buf_set_text(0, self.start_row + 1, 0, self.start_row + 1, col, {})
-		end
+		vim.api.nvim_buf_set_text(
+			0,
+			self.start_row,
+			self.start_column,
+			self.start_row+self.end_row,
+			self.start_column+self.end_column,
+			self.character
+		)
 	else
 		print("DELETE")
 		print(vim.inspect(self.character))
