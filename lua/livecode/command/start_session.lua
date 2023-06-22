@@ -17,7 +17,7 @@ local function StartSessionCommand(port)
 		pubIp = string.gsub(pubIp, "%s+", " ")
 		print(vim.inspect(pubIp))
 		else
-			print("To find the local ip of your device, visit www.whatismybrowser.com/detect/what-is-my-local-ip-address")
+			print("To find the local ip of your device, visit www.whatismybrowser.com/detect/what-is-my-local-ip-address.com")
 	end
 	print("To access this on another device, run ':LCJoin " .. pubIp .. "" ..  port .. "' on another device.")
 end
