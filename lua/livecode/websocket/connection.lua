@@ -89,9 +89,7 @@ function connection_metatable:send_message(str)
 
 		local s = util.convert_bytes_to_string(frame)
 
-		-- connections[self.id].sock:write(s)
 		self.sock:write(s)
-		print("written to: " .. self.id)
 
 		sent = sent + send
 	end

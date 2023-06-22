@@ -17,7 +17,6 @@ describe("check edit messages (insert):", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -61,7 +60,6 @@ describe("check edit messages (insert):", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -108,7 +106,6 @@ world]]
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -153,7 +150,6 @@ world!]]
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -199,7 +195,6 @@ end]]
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -291,7 +286,6 @@ end]]
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -345,7 +339,6 @@ describe("check edit messages (delete):", function()
 		client = tu.setup_test_client()
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -389,7 +382,6 @@ describe("check edit messages (delete):", function()
 		client = tu.setup_test_client()
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -437,7 +429,6 @@ describe("check edit messages (delete):", function()
 		client = tu.setup_test_client()
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -486,7 +477,6 @@ finally]]
 		client = tu.setup_test_client()
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
@@ -535,7 +525,6 @@ finally]]
 		client = tu.setup_test_client()
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming")
 			coroutine.resume(co)
 		end, 100)
         
