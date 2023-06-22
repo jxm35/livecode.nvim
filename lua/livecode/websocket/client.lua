@@ -28,8 +28,6 @@ local function client_attach_to_buffer(client)
 				client.ignore_ticks[changedtick] = nil
 				return
 			end
-			-- print(start_row .. "," .. start_column .. "," .. old_end_row .. "," .. old_end_column)
-			-- print(new_end_row .. "," .. new_end_column)
 			local newbytes = vim.api.nvim_buf_get_text(
 				0,
 				start_row,
@@ -38,7 +36,6 @@ local function client_attach_to_buffer(client)
 				start_column + new_end_column,
 				{}
 			)
-			print(vim.inspect(newbytes))
 			local operationType = ot.OPERATION_TYPE.INSERT
 			if new_end_row < old_end_row then
 				operationType = ot.OPERATION_TYPE.DELETE
@@ -62,10 +59,8 @@ local function client_attach_to_buffer(client)
 			if client.sent_changes == nil then
 				operation:send(client.active_conn, client.last_synced_revision)
 				client.sent_changes = operation
-				print("sent operation")
 			else
 				client.pending_changes:push(operation)
-				print("pushed op to pending")
 			end
 		end,
 	})
@@ -85,16 +80,13 @@ local function client_on_connect(client)
 			o.on_connect()
 		end
 	end
-	print("Attempting to connect...")
 end
 
 local function handle_info_message(client, decoded)
-	print("Recieved: " .. decoded[2])
 end
 
 local function handle_welcome_message(client, decoded)
 	if decoded[2] == true then
-		print("I'm first")
 		local success = client_attach_to_buffer(client)
 		if success == false then
 			error("could not connect to buffer")
@@ -109,7 +101,6 @@ local function handle_welcome_message(client, decoded)
 end
 
 local function handle_get_buffer_message(client, decoded)
-	print("buffer requested.")
 				local fullname = vim.api.nvim_buf_get_name(0)
 				local cwdname = vim.api.nvim_call_function("fnamemodify", { fullname, ":." }) -- filepath relative to current working directory
 				local bufname = cwdname
@@ -132,7 +123,6 @@ local function handle_get_buffer_message(client, decoded)
 end
 
 local function handle_buffer_content_message(client, decoded)
-	print("loading new buffer")
 				local _, _, bufname, pidslist, content, lsr = unpack(decoded)
 				client.last_synced_revision = lsr
 				local buf = vim.api.nvim_create_buf(true, false)
@@ -151,19 +141,13 @@ end
 
 local function handle_ack_message(client, decoded)
 	--validate they are the same,
-	print("ack Recieved")
 	client.last_synced_revision = decoded[2]
-	print(
-		"setting processed: " .. client.sent_changes.character[1],
-		", " .. client.sent_changes.start_row .. "revision: " .. client.last_synced_revision
-	)
 	client.processed_changes[client.last_synced_revision] = client.sent_changes
 	client.sent_changes = nil
 	if client.pending_changes:isEmpty() == false then
 		local operation = client.pending_changes:dequeue()
 		operation:send(client.active_conn, client.last_synced_revision)
 		client.sent_changes = operation
-		print("new operation sent")
 	end
 end
 
@@ -171,22 +155,7 @@ local function handle_edit_message(client, decoded)
 	local operation = ot.newOperationFromMessage(decoded[2])
 				local change_revision = decoded[3]
 				client.last_synced_revision = decoded[4]
-				print(
-					"recieved: "
-						.. operation.start_row
-						.. ","
-						.. operation.start_column
-						.. ","
-						.. operation.end_row
-						.. ","
-						.. operation.end_column
-				)
-				print(operation.new_end_row .. "," .. operation.new_end_column)
-				print(vim.inspect(operation.character))
 				-- iterate through processed_changes
-				if operation.operationType == ot.OPERATION_TYPE.DELETE then
-					print("received revision: '" .. change_revision .. "'")
-				end
 				for i = change_revision + 1, client.last_synced_revision, 1 do
 					if client.processed_changes[i] ~= nil then
 						operation = ot.realignOperations(client.processed_changes[i], operation)
@@ -203,11 +172,7 @@ local function handle_edit_message(client, decoded)
 				if pcall(function(...)
 					operation:execute(client.ignore_ticks)
 				end) then
-					print("char added")
 				else
-					for k, v in pairs(operation) do
-						print(k .. ": " .. vim.inspect(v))
-					end
 					error("failed to add char")
 				end
 end

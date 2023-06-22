@@ -118,9 +118,7 @@ end
 function operation_metatable:execute(ignore_table)
 	assert( type(ignore_table) == "table", "Error: invalid ignore_table provided")
 	--vim.api.nvim_buf_set_text(0, 0, 28, 0, 32, {self.character})
-	print("op" .. self.operationType .. " " .. OPERATION_TYPE.INSERT)
 	if self.operationType == OPERATION_TYPE.INSERT then
-		print("INSERT")
 		local current_row = self.start_row
 		local action_row = current_row
 		local next_tick = vim.api.nvim_buf_get_changedtick(0)
@@ -134,8 +132,6 @@ function operation_metatable:execute(ignore_table)
 			self.character
 		)
 	else
-		print("DELETE")
-		print(vim.inspect(self.character))
 		local action_column = self.start_column + self.end_column
 		local sr = self.start_row
 		local sc = self.start_column
@@ -147,7 +143,6 @@ function operation_metatable:execute(ignore_table)
 		if self.start_column > 0 and self.end_row == 1 and self.end_column == 0 then
 			action_column = 0
 		end
-		print(sr .. " " .. sc .. " " .. er .. " " .. action_column)
 		local next_tick = vim.api.nvim_buf_get_changedtick(0)
 		ignore_table[next_tick] = true
 		vim.api.nvim_buf_set_text(0, sr, sc, er, action_column, { self.character[1] })
@@ -160,7 +155,6 @@ local function transformInsertInsert(local_operation, incoming_operation, local_
 		"Error: invalid operation"
 	)
 	assert((type(local_row_num) == "number" and type(incoming_row_num) == "number"), "Error: invalid row number types")
-	print("-----------------change-char:" .. incoming_operation.character[1])
 	if
 		local_operation.start_column <= incoming_operation.start_column
 		--		or ((local_operation.start_column == incoming_operation.start_column) and order() == -1)
@@ -243,7 +237,6 @@ local function transformDeleteInsert(local_operation, incoming_operation, local_
 end
 
 local function transformDeleteDelete(local_operation, incoming_operation, local_row_num, incoming_row_num)
-	print("transformDeleteDelete")
 	assert(
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
@@ -279,19 +272,11 @@ local function realignOperations(local_operation, incoming_operation)
 		(type(local_operation) == "operation" and type(incoming_operation) == "operation"),
 		"Error: invalid operation"
 	)
-	print("----------------------checking-char:" .. incoming_operation.character[1])
-	print("against: " .. local_operation.character[1], ", " .. local_operation.start_row)
-	print("before")
-	for k, v in pairs(incoming_operation) do
-		print(k .. ": " .. vim.inspect(v))
-	end
 
 	-- handle changes that affect which line we have changed
 	local line_diff = local_operation.new_end_row - local_operation.end_row
 	if incoming_operation.start_row > local_operation.start_row then
-		print("line diff: " .. line_diff)
 		incoming_operation.start_row = incoming_operation.start_row + line_diff
-		-- incoming_operation.end_row = incoming_operation.end_row + line_diff
 	end
 
 	-- check if any changes are on the same row in each document
@@ -329,11 +314,6 @@ local function realignOperations(local_operation, incoming_operation)
 					transformDeleteDelete(local_operation, incoming_operation, row_num, incoming_rows_in_common[index])
 			end
 		end
-	end
-
-	print("after")
-	for k, v in pairs(incoming_operation) do
-		print(k .. ": " .. vim.inspect(v))
 	end
 
 	return incoming_operation

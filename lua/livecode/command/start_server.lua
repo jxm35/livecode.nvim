@@ -12,8 +12,6 @@ local function StartServerCommand(port)
 			server.connection_count = server.connection_count + 1
 
 			local function forward_to_other_users(msg)
-				print("active conn id: " .. conn.id)
-				print(vim.inspect(server.connections))
 				for id, client in pairs(server.connections) do
 					if id ~= conn.id then
 						client:send_message(msg)
@@ -52,13 +50,11 @@ local function StartServerCommand(port)
 								}
 								encoded = vim.json.encode(response_msg)
 								conn:send_message(encoded)
-								print(decoded[2] .. " has joined.")
 							elseif decoded[1] == util.MESSAGE_TYPE.GET_BUFFER then
 								decoded[2] = conn.id
 								local encoded = vim.json.encode(decoded)
 								forward_to_one_user(encoded)
 							elseif decoded[1] == util.MESSAGE_TYPE.BUFFER_CONTENT then
-								print("forwarding buffer content")
 								decoded[6] = server.revision_number
 								local msg = vim.json.encode(decoded)
 								if decoded[2] == -1 then
@@ -85,7 +81,6 @@ local function StartServerCommand(port)
 								}
 								local encoded = vim.json.encode(response_msg)
 								conn:send_message(encoded)
-								print("forwarded and responeded")
 							else
 								error("Unknown message " .. vim.inspect(decoded))
 							end
@@ -95,7 +90,6 @@ local function StartServerCommand(port)
 				on_disconnect = function()
 					vim.schedule(function()
 						server.connection_count = math.max(server.connection_count - 1, 0)
-						print("Disconnected. " .. server.connection_count .. " client(s) remaining.")
 						if server.connection_count == 0 then
 							server.initialised = false
 						end

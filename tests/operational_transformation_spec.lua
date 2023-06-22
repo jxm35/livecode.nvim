@@ -20,7 +20,6 @@ describe("test when to apply operational transformation:", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
 			coroutine.resume(co)
 		end, 100)
 
@@ -69,7 +68,6 @@ describe("test when to apply operational transformation:", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming2")
 			coroutine.resume(co)
 		end, 100)
 
@@ -132,7 +130,6 @@ describe("test when to apply operational transformation:", function()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming2")
 			coroutine.resume(co)
 		end, 100)
 
@@ -198,7 +195,6 @@ describe("test insert insert:", function ()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
 			coroutine.resume(co)
 		end, 100)
 
@@ -261,7 +257,6 @@ describe("test insert delete:", function ()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
 			coroutine.resume(co)
 		end, 100)
 
@@ -324,7 +319,6 @@ describe("test delete insert:", function ()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
 			coroutine.resume(co)
 		end, 100)
 
@@ -387,7 +381,6 @@ describe("test delete delete:", function ()
         -- setup
 		local co = coroutine.running()
 		vim.defer_fn(function()
-            print("coroutine resuming1")
 			coroutine.resume(co)
 		end, 100)
 
