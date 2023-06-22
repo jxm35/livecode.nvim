@@ -1,15 +1,15 @@
-*livecode-nvim.txt*
+*livecode-nvim.txt*                                    For Nvim version 0.7+
 
-Live, collaborative coding in Neovim, written all in lua.
+Live, collaborative coding in Neovim, written all in lua.         *livecode*
 
 ==============================================================================
-CONTENTS                                          *livecode-nvim-contents*
+CONTENTS                                                    *livecode-nvim*
 
     1. Setup ................................... |livecode-nvim-setup|
     2. Commands ................................ |livecode-nvim-commands|
 
 ==============================================================================
-1. SETUP                                             *livecode-nvim-setup*
+1. SETUP                                               *livecode-nvim-setup*
 
 Make sure you add a call to require livecode with the proper configuration 
 somewhere in your initialisation.
@@ -18,9 +18,9 @@ lua require('livecode')
 
 
 ==============================================================================
-2. COMMANDS                                       *livecode-nvim-commands*
+2. COMMANDS                                          *livecode-nvim-commands*
 
-:LCStartSession [port]                                        *LCStartSession*
+:LCStartSession [port]                                       *LCStartSession*
 
 Create a session on the specified port available on your local wifi network, 
 and share the current buffer.
