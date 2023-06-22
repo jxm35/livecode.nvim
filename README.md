@@ -15,13 +15,22 @@
 - With [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
-use {'jxm35/livecode.nvim'}
+	use({
+		"jxm35/livecode.nvim",
+		config = function()
+			require("livecode")
+		end,
+	})
+
 ```
 
 - With [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
 Plug 'jxm35/livecode.nvim'
+
+" Somewhere after plug#end()
+lua require('livecode')
 ```
 
 ## Commands
