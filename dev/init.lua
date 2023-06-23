@@ -5,6 +5,8 @@ package.loaded["dev"] = nil
 
 vim.api.nvim_set_keymap("n", ",t", "<cmd>luafile dev/init.lua<cr>", {})
 
+require("livecode").setup()
+
 Livecode = require("livecode")
 
 vim.api.nvim_set_keymap("n", ",c", ":lua Livecode.StartServer()<cr>", {})

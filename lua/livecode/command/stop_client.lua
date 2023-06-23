@@ -4,11 +4,11 @@ local sc = require("livecode.command.start_client")
 local ss = require("livecode.command.start_server")
 
 local function StopClientCommand()
-	if Client == nil then
+	if LCState.client == nil then
 		error("you are not connected to a session")
 	end
-	Client.active_conn.sock:close()
-	Client = nil
+	LCState.client.active_conn.sock:close()
+	LCState.client = nil
 end
 return {
 	StopClientCommand = StopClientCommand,
