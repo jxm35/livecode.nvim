@@ -68,9 +68,13 @@ local function client_attach_to_buffer(client)
 end
 
 local function client_on_connect(client)
+	local name = ""
+	if LCState.username then
+		name = LCState.username
+	end
     local obj = {
 		util.MESSAGE_TYPE.CONNECT,
-		"username",
+		name,
 	}
 	local encoded = vim.json.encode(obj)
 	client.active_conn:send_message(encoded)

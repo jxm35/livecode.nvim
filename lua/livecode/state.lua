@@ -1,2 +1,1 @@
-Server = nil
 Client = nil

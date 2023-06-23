@@ -109,7 +109,7 @@ local function StartServerCommand(port)
 	server:set_callbacks(callbacks)
 
 	server:listen()
-	Server = server
+	LCState.server = server
 end
 
 return {

@@ -11,7 +11,7 @@ local function StartClientCommand(host, port)
 	
 	client:connect()
 
-	Client = client
+	LCState.client = client
 end
 
 

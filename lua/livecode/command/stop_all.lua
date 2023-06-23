@@ -5,7 +5,7 @@ local function StopAllCommand()
 	if Client ~= nil then
 		sc.StopClientCommand()
 	end
-	if Server ~= nil then
+	if LCState.server ~= nil then
 		ss.StopServerCommand()
 	end
 end

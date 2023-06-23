@@ -12,13 +12,21 @@
 
 ## Install
 
+The plugin must be initialised with the following:
+
+```lua
+require("livecode").setup()
+```
+
+For example:
+
 - With [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 	use({
 		"jxm35/livecode.nvim",
 		config = function()
-			require("livecode")
+			require("livecode").setup()
 		end,
 	})
 
@@ -30,7 +38,19 @@
 Plug 'jxm35/livecode.nvim'
 
 " Somewhere after plug#end()
-lua require('livecode')
+lua require('livecode').setup()
+```
+
+### Configure
+
+The plugin must be initialised with the following:
+
+`require("livecode").setup()`
+
+To set a username, so people know when you join or leave:
+
+```lua
+require("livecode").setup({username = "dummy_username"})
 ```
 
 ## Commands
@@ -46,7 +66,7 @@ lua require('livecode')
 - This can be found on mac/linux by running the command ` ipconfig getifaddr en0`
 or on windows by running the command `ipconfig /all`.
 - The ip address should take the form `192.168.*.*`.
-- visit `www.whatismybrowser.com/detect/what-is-my-local-ip-address.com` for more details.
+- visit `www.whatismybrowser.com/detect/what-is-my-local-ip-address` for more details.
 
 ### Credits
 
