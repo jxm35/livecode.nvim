@@ -1,5 +1,4 @@
 local command = require("livecode.command")
-local state = require("livecode.state")
 
 local function make_commands()
 	vim.cmd([[command! -nargs=* LCStartSession lua require('livecode.command').StartServerCommand(<f-args>)]])
