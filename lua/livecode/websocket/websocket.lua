@@ -18,9 +18,6 @@ type = function(obj)
 end
 
 local function newWebsocket(host, port, server)
-	assert(type(host) == "string", type(host) .. "is not a string")
-	assert(type(port) == "number", type(port) .. "is not a number")
-	assert(type(server) == "boolean", type(server) .. "is not a bool")
 	local ws_server = nil
 	local active_conn = nil
 	if server == true then
