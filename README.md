@@ -2,6 +2,7 @@
 - Live collaborative coding in Neovim, written 100% in lua.
 
 ## Preview
+[here](https://www.youtube.com/watch?v=vsg3ABVB0I4)
 
 ## Features
 
